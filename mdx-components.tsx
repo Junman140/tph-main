@@ -1,6 +1,6 @@
-import React, { ComponentPropsWithoutRef } from 'react';
-import { Link } from 'next-view-transitions';
-import { highlight } from 'sugar-high';
+import React from 'react';
+import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
 type HeadingProps = ComponentPropsWithoutRef<'h1'>;
 type ParagraphProps = ComponentPropsWithoutRef<'p'>;
@@ -65,23 +65,26 @@ const components = {
     );
   },
   code: ({ children, ...props }: ComponentPropsWithoutRef<'code'>) => {
-    const codeHTML = highlight(children as string);
-    return <code dangerouslySetInnerHTML={{ __html: codeHTML }} {...props} />;
+    return (
+      <SyntaxHighlighter language="javascript" style={docco} {...props}>
+        {children}
+      </SyntaxHighlighter>
+    );
   },
   Table: ({ data }: { data: { headers: string[]; rows: string[][] } }) => (
-    <table>
+    <table className="min-w-full table-auto border-collapse border border-gray-300">
       <thead>
-        <tr>
+        <tr className="bg-gray-100">
           {data.headers.map((header, index) => (
-            <th key={index}>{header}</th>
+            <th key={index} className="px-4 py-2 text-left border-b">{header}</th>
           ))}
         </tr>
       </thead>
       <tbody>
         {data.rows.map((row, index) => (
-          <tr key={index}>
+          <tr key={index} className="hover:bg-gray-50">
             {row.map((cell, cellIndex) => (
-              <td key={cellIndex}>{cell}</td>
+              <td key={cellIndex} className="px-4 py-2 border-b">{cell}</td>
             ))}
           </tr>
         ))}

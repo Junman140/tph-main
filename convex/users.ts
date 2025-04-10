@@ -6,11 +6,11 @@ export const getUser = query({
     handler: async (ctx) => {
         const identity = await ctx.auth.getUserIdentity();
         if (identity === null) {
-            return ("Not authenticated");
+            return null;
         }
-        return identity
+        return identity;
     }
-})
+});
 
 export const getUserByToken = query({
     args: { tokenIdentifier: v.string() },
@@ -43,15 +43,18 @@ export const store = mutation({
         if (user !== null) {
             // If we've seen this identity before but the name has changed, patch the value
             if (user.name !== identity.name) {
-                await ctx.db.patch(user._id, { name: identity.name, email: identity.email });
+                await ctx.db.patch(user._id, { 
+                    name: identity.name || user.name,
+                    email: identity.email || user.email 
+                });
             }
             return user._id;
         }
 
         // If it's a new identity, create a new User
         return await ctx.db.insert("users", {
-            name: identity.name!,
-            email: identity.email!,
+            name: identity.name || "Anonymous",
+            email: identity.email || "",
             userId: identity.subject,
             tokenIdentifier: identity.subject,
             createdAt: new Date().toISOString(),

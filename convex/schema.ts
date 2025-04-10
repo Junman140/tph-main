@@ -32,8 +32,6 @@ export default defineSchema({
         name: v.optional(v.string()),
         image: v.optional(v.string()),
         userId: v.string(),
-        subscription: v.optional(v.string()),
-        credits: v.optional(v.string()),
         tokenIdentifier: v.string(),
     }).index("by_token", ["tokenIdentifier"]),
     subscriptions: defineTable({

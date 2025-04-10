@@ -1,65 +1,45 @@
-import Provider from "@/app/provider";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/sonner";
-import { ClerkProvider } from "@clerk/nextjs";
-import { Analytics } from "@vercel/analytics/react";
-import { GeistSans } from "geist/font/sans";
-import type { Metadata } from "next";
-import "./globals.css";
+'use client';
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://nextstarter.xyz/"),
-  title: {
-    default: 'Next Starter',
-    template: `%s | Next Starter`
-  },
-  description:
-    "The Ultimate Nextjs 15 Starter Kit for quickly building your SaaS, giving you time to focus on what really matters",
-  openGraph: {
-    description:
-      "The Ultimate Nextjs 15 Starter Kit for quickly building your SaaS, giving you time to focus on what really matters",
-    images: [
-      "https://dwdwn8b5ye.ufs.sh/f/MD2AM9SEY8GucGJl7b5qyE7FjNDKYduLOG2QHWh3f5RgSi0c",
-    ],
-    url: "https://nextstarter.xyz/",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Nextjs Starter Kit",
-    description:
-      "The Ultimate Nextjs 15 Starter Kit for quickly building your SaaS, giving you time to focus on what really matters",
-    siteId: "",
-    creator: "@rasmickyy",
-    creatorId: "",
-    images: [
-      "https://dwdwn8b5ye.ufs.sh/f/MD2AM9SEY8GucGJl7b5qyE7FjNDKYduLOG2QHWh3f5RgSi0c",
-    ],
-  },
-};
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import "./globals.css"
+import { ThemeProvider } from "@/components/theme-provider"
+import { MainNav } from "@/components/layout/main-nav"
+import { Footer } from "@/components/layout/footer"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { AuthProvider } from "@/hooks/use-auth"
+import { ClerkProvider } from '@clerk/nextjs'
+import { dark, neobrutalism } from '@clerk/themes'
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+const inter = Inter({ subsets: ["latin"] })
+
+const queryClient = new QueryClient()
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider dynamic>
+    <ClerkProvider
+      appearance={{
+        baseTheme: [dark, neobrutalism],
+      }}
+    >
       <html lang="en" suppressHydrationWarning>
-        <body className={GeistSans.className}>
-          <Provider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="dark"
-              enableSystem
-              disableTransitionOnChange
-            >
-              {children}
-              <Toaster />
-            </ThemeProvider>
-          </Provider>
-          <Analytics />
+        <body className={inter.className} suppressHydrationWarning>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <QueryClientProvider client={queryClient}>
+              <AuthProvider>
+                <MainNav />
+                {children}
+                <Footer />
+              </AuthProvider>
+            </QueryClientProvider>
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>
-  );
+  )
 }
