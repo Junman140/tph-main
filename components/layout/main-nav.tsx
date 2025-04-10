@@ -114,7 +114,7 @@ export function MainNav() {
                 <UserButton
                   afterSignOutUrl="/"
                   appearance={{
-                    baseTheme: mounted ? (theme === "dark" ? dark : light) : light,
+                    baseTheme: mounted ? (theme === "dark" ? "dark" as any : "light" as any) : "light" as any,
                     elements: {
                       avatarBox: "h-10 w-10",
                     }
@@ -168,7 +168,7 @@ export function MainNav() {
                         <UserButton
                           afterSignOutUrl="/"
                           appearance={{
-                            baseTheme: mounted ? (theme === "dark" ? dark : light) : light,
+                            baseTheme: mounted ? (theme === "dark" ? "dark" as any : "light" as any) : "light" as any,
                             elements: {
                               avatarBox: "h-10 w-10",
                             }
