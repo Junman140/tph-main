@@ -13,7 +13,6 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Menu, X, Sun, Moon } from "lucide-react"
 import { useTheme } from "next-themes"
 import { UserButton, SignInButton, SignedIn, SignedOut } from "@clerk/nextjs"
-import { dark, light } from "@clerk/themes"
 
 // Separate theme toggle component
 function ThemeToggle() {
