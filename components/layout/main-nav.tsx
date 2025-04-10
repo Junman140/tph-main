@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Menu, X, Sun, Moon } from "lucide-react"
 import { useTheme } from "next-themes"
 import { UserButton, SignInButton, SignedIn, SignedOut } from "@clerk/nextjs"
+import { dark, light } from "@clerk/themes"
 
 // Separate theme toggle component
 function ThemeToggle() {
@@ -110,12 +111,12 @@ export function MainNav() {
                 <Button variant="outline" className="border-primary/20 text-primary">
                   Donate
                 </Button>
-                <UserButton 
+                <UserButton
                   afterSignOutUrl="/"
                   appearance={{
-                    baseTheme: mounted ? (theme === "dark" ? "dark" : "light") : "light",
+                    baseTheme: mounted ? (theme === "dark" ? dark : light) : light,
                     elements: {
-                      avatarBox: "w-8 h-8"
+                      avatarBox: "h-10 w-10",
                     }
                   }}
                 />
@@ -164,12 +165,12 @@ export function MainNav() {
                   <div className="border-t py-6">
                     <SignedIn>
                       <div className="space-y-4">
-                        <UserButton 
+                        <UserButton
                           afterSignOutUrl="/"
                           appearance={{
-                            baseTheme: mounted ? (theme === "dark" ? "dark" : "light") : "light",
+                            baseTheme: mounted ? (theme === "dark" ? dark : light) : light,
                             elements: {
-                              avatarBox: "w-10 h-10"
+                              avatarBox: "h-10 w-10",
                             }
                           }}
                         />
