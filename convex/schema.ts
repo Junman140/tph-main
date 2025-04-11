@@ -66,5 +66,9 @@ export default defineSchema({
     })
         .index("type", ["type"])
         .index("polarEventId", ["polarEventId"]),
-
+    subscribers: defineTable({
+        email: v.string(),
+        subscriptionDate: v.number(),
+        status: v.string(), // 'active' | 'unsubscribed'
+    }).index("by_email", ["email"]),
 })

@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Facebook, Twitter, Instagram, Youtube, ArrowUp, Mail, Phone, MapPin, Send } from "lucide-react"
+import { SubscriptionForm } from "@/components/subscription-form"
 
 export function Footer() {
   const scrollToTop = () => {
@@ -16,7 +17,7 @@ export function Footer() {
       {/* Newsletter Section */}
       <div className="border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-10 items-center">
             <div>
               <h3 className="text-2xl font-bold mb-4">Stay Connected</h3>
               <p className="text-white/70 max-w-md">
@@ -24,19 +25,7 @@ export function Footer() {
               </p>
             </div>
             <div>
-              <form className="flex flex-col sm:flex-row gap-3">
-                <div className="flex-grow">
-                  <Input
-                    type="email"
-                    placeholder="Your email address"
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12"
-                  />
-                </div>
-                <Button type="submit" className="h-12">
-                  Subscribe
-                  <Send className="ml-2 h-4 w-4" />
-                </Button>
-              </form>
+              <SubscriptionForm />
             </div>
           </div>
         </div>
