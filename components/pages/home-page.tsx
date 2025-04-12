@@ -1,16 +1,21 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ArrowRight, Calendar, Users, Video, Heart, ChevronDown, Play, User, MapPin } from "lucide-react"
+import { ArrowRight, Calendar, Users, Video, Heart, ChevronDown, Play, User, MapPin, Clock, Headphones } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MainNav } from "@/components/layout/main-nav"
-import { format } from "date-fns"
+import { Footer } from "@/components/layout/footer"
+import { format, formatDistanceToNow } from "date-fns"
 import Image from "next/image"
 import { Carousel } from "@/components/ui/carousel"
+import useEmblaCarousel from 'embla-carousel-react'
+import Autoplay from 'embla-carousel-autoplay'
+import { api } from "@/convex/_generated/api";
+import { useQuery } from "convex/react";
 
 const carouselImages = [
   {
@@ -56,30 +61,30 @@ const BLOG_POSTS = [
 
 const FEATURED_EVENTS = [
   {
-    title: "Sunday Worship Service",
-    type: "Worship",
-    date: "Every Sunday",
-    time: "10:00 AM",
+    title: "Women Of Substance",
+    type: "Confrence",
+    date: "Sunday, 13th April 2025",
+    time: "08:00 AM",
     location: "Main Sanctuary",
-    imageUrl: "/gallery/fresh1.jpg",
+    imageUrl: "/events/woman of substance 2025B.jpg",
     description: "Join us for a powerful time of worship and the Word.",
   },
   {
-    title: "Youth Conference 2025",
+    title: "Dominion 2025 System",
     type: "Conference",
-    date: "April 15-17, 2025",
-    time: "6:00 PM",
-    location: "Youth Center",
-    imageUrl: "/gallery/fresh7.jpg",
-    description: "Three days of inspiration, worship, and community for young believers.",
+    date: "Sunday, 13th May 2025",
+    time: "08:00 AM",
+    location: "Main Sanctuary",
+    imageUrl: "/events/DOMINION 2025 SYSTEM.jpg",
+    description: "Three days of inspiration, worship, and community for believers.",
   },
   {
-    title: "Easter Celebration",
+    title: "Alive Music Experience",
     type: "Special Event",
-    date: "April 21, 2025",
-    time: "9:00 AM",
+    date: "Sunday, 21st March 2025",
+    time: "08:00 AM",
     location: "Main Sanctuary",
-    imageUrl: "/gallery/fresh4.jpg",
+    imageUrl: "/events/ALIVE MUSIC EXPIRIENCE COTH.jpg",
     description: "Celebrate the resurrection of Christ with special music and activities.",
   },
 ]
@@ -104,19 +109,163 @@ const TESTIMONIALS = [
   },
 ]
 
+interface SpotifyEpisode {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  duration: number;
+  imageUrl: string;
+  audioUrl: string;
+}
+
+const GALLERY_ITEMS = [
+  {
+    id: 1,
+    src: "/gallery/aud3.jpg",
+    alt: "Church Auditorium",
+    description: "Our beautiful sanctuary where we gather to worship"
+  },
+  {
+    id: 2,
+    src: "/gallery/aud2.jpg",
+    alt: "Church Service",
+    description: "Experiencing God's presence together in worship"
+  },
+  {
+    id: 3,
+    src: "/gallery/BREAKFORTH.jpg",
+    alt: "Break Forth",
+    description: "Special moments from our Break Forth event"
+  },
+  {
+    id: 4,
+    src: "/gallery/dance.jpg",
+    alt: "Praise Dance",
+    description: "Expressing worship through dance ministry"
+  },
+  {
+    id: 5,
+    src: "/gallery/drama.jpg",
+    alt: "Drama Ministry",
+    description: "Creative expressions through our drama ministry"
+  }
+]
+
+function CarouselDots({ selectedIndex, length, onClick }: { selectedIndex: number; length: number; onClick: (index: number) => void }) {
+  return (
+    <div className="absolute bottom-4 left-0 right-0 z-20 flex justify-center gap-2">
+      {Array.from({ length }).map((_, i) => (
+        <button
+          key={i}
+          className={`w-2 h-2 rounded-full transition-all ${
+            i === selectedIndex 
+              ? 'bg-primary w-4' 
+              : 'bg-primary/50 hover:bg-primary/75'
+          }`}
+          onClick={() => onClick(i)}
+          aria-label={`Go to slide ${i + 1}`}
+        />
+      ))}
+    </div>
+  )
+}
+
+const BlogSection = () => {
+  const posts = useQuery(api.posts.getPublishedPosts);
+
+  if (posts === undefined) {
+    return (
+      <section className="py-16 bg-background">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold mb-8">Latest Blog Posts</h2>
+          <div className="flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="py-16 bg-background">
+      <div className="container mx-auto px-4">
+        <h2 className="text-3xl font-bold mb-8">Latest Blog Posts</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {posts.map((post: any) => (
+            <Link key={post._id} href={`/blog/${post.slug}`}>
+              <Card className="h-full hover:shadow-lg transition-shadow duration-200">
+                <CardContent className="p-0">
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold mb-2">{post.title}</h3>
+                    <p className="text-muted-foreground line-clamp-2">
+                      {post.content.substring(0, 150)}...
+                    </p>
+                    <div className="flex items-center mt-4">
+                      <div className="flex items-center">
+                        <span className="text-sm text-muted-foreground">
+                          By {post.author}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 export default function HomePage() {
   const [currentTestimonial, setCurrentTestimonial] = useState(0)
-  const [isVisible, setIsVisible] = useState(false)
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay()])
 
   useEffect(() => {
-    setIsVisible(true)
-
     const interval = setInterval(() => {
       setCurrentTestimonial((prev) => (prev + 1) % TESTIMONIALS.length)
     }, 5000)
-
     return () => clearInterval(interval)
   }, [])
+
+  const scrollTo = useCallback(
+    (index: number) => {
+      emblaApi && emblaApi.scrollTo(index)
+    },
+    [emblaApi]
+  )
+
+  const [selectedIndex, setSelectedIndex] = useState(0)
+
+  useEffect(() => {
+    if (!emblaApi) return
+
+    emblaApi.on("select", () => {
+      setSelectedIndex(emblaApi.selectedScrollSnap())
+    })
+  }, [emblaApi])
+
+  const rootNode = useCallback((emblaRoot: any) => {
+    if (emblaRoot) {
+      emblaRef(emblaRoot)
+    }
+  }, [emblaRef])
+
+  // Podcast section data
+  const podcastEpisodes: SpotifyEpisode[] = [
+    {
+      id: "1",
+      title: "Walking in Faith",
+      description: "Join us as we explore what it means to walk by faith in today's world.",
+      date: "2025-04-12",
+      duration: 1800,
+      imageUrl: "/podcast/episode1.jpg",
+      audioUrl: "https://example.com/episode1.mp3"
+    },
+    // Add more episodes as needed
+  ];
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id)
@@ -126,176 +275,54 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen bg-background">
       <MainNav />
 
       <main className="flex-grow">
-        {/* Hero Section with Carousel */}
-        <section className="relative h-[90vh]">
-          <Carousel 
-            images={carouselImages}
-            className="h-full"
-            overlay={
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8 }}
-                  className="max-w-3xl mx-auto text-center px-4"
-                >
-                  <Badge className="mb-6 text-lg py-2 px-4 bg-primary/20 text-primary border-primary/30">
-                    Welcome to TPH Global
-                  </Badge>
-                  <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
-                    Step Into Your Destiny: The House Where <span className="text-primary">Generals Are Forged</span>
-                  </h1>
-                  <p className="text-xl text-white/80 mb-10 leading-relaxed">
-                    Join our community dedicated to raising Kingdom generals through principles of loyalty, holiness, and
-                    Anakazo empowerment.
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Link href="/about">
-                      <Button size="lg" className="text-base px-8 py-6 w-full sm:w-auto">
-                        Learn More About Us
-                        <ArrowRight className="ml-2 h-5 w-5" />
-                      </Button>
-                    </Link>
-                    <Link href="/sermons">
-                      <Button
-                        variant="outline"
-                        size="lg"
-                        className="text-base px-8 py-6 w-full sm:w-auto bg-white/10 backdrop-blur-sm text-white border-white/20 hover:bg-white/20"
-                      >
-                        <Play className="mr-2 h-5 w-5 fill-white" />
-                        Watch Sermons
-                      </Button>
-                    </Link>
-                  </div>
-                </motion.div>
-              </div>
-            }
-          />
-        </section>
-
-        {/* Quick Links Section */}
-        <section id="quick-links" className="py-20 bg-muted/50 dark:bg-muted border-y border-border/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold mb-4 text-foreground">Discover Our Ministry</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Explore the various aspects of our ministry and find your place in our community
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <motion.div whileHover={{ y: -10, transition: { duration: 0.2 } }} className="group">
-                <Link href="/sermons">
-                  <Card className="h-full overflow-hidden border-border/50 bg-card shadow-lg group-hover:shadow-xl transition-all duration-300">
-                    <div className="h-40 bg-primary/10 flex items-center justify-center dark:bg-primary/5">
-                      <Video className="h-16 w-16 text-primary" />
-                    </div>
-                    <CardContent className="p-6">
-                      <h3 className="font-semibold text-xl mb-2 text-foreground group-hover:text-primary transition-colors">
-                        Latest Sermons
-                      </h3>
-                      <p className="text-muted-foreground/80">
-                        Access our latest teachings and spiritual resources for your growth
-                      </p>
-                      <div className="mt-4 flex items-center text-primary">
-                        <span className="text-sm font-medium">Explore Sermons</span>
-                        <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </motion.div>
-
-              <motion.div whileHover={{ y: -10, transition: { duration: 0.2 } }} className="group">
-                <Link href="/events">
-                  <Card className="h-full overflow-hidden border-border/50 bg-card shadow-lg group-hover:shadow-xl transition-all duration-300">
-                    <div className="h-40 bg-primary/10 flex items-center justify-center dark:bg-primary/5">
-                      <Calendar className="h-16 w-16 text-primary" />
-                    </div>
-                    <CardContent className="p-6">
-                      <h3 className="font-semibold text-xl mb-2 text-foreground group-hover:text-primary transition-colors">
-                        Upcoming Events
-                      </h3>
-                      <p className="text-muted-foreground/80">
-                        Stay updated with our events and conferences
-                      </p>
-                      <div className="mt-4 flex items-center text-primary">
-                        <span className="text-sm font-medium">View Events</span>
-                        <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </motion.div>
-
-              <motion.div whileHover={{ y: -10, transition: { duration: 0.2 } }} className="group">
-                <Link href="/prayer">
-                  <Card className="h-full overflow-hidden border-border/50 bg-card shadow-lg group-hover:shadow-xl transition-all duration-300">
-                    <div className="h-40 bg-primary/10 flex items-center justify-center dark:bg-primary/5">
-                      <Heart className="h-16 w-16 text-primary" />
-                    </div>
-                    <CardContent className="p-6">
-                      <h3 className="font-semibold text-xl mb-2 text-foreground group-hover:text-primary transition-colors">
-                        Prayer Network
-                      </h3>
-                      <p className="text-muted-foreground/80">
-                        Join our global prayer community
-                      </p>
-                      <div className="mt-4 flex items-center text-primary">
-                        <span className="text-sm font-medium">Join Prayer</span>
-                        <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </motion.div>
-
-              <motion.div whileHover={{ y: -10, transition: { duration: 0.2 } }} className="group">
-                <Link href="/about">
-                  <Card className="h-full overflow-hidden border-border/50 bg-card shadow-lg group-hover:shadow-xl transition-all duration-300">
-                    <div className="h-40 bg-primary/10 flex items-center justify-center dark:bg-primary/5">
-                      <Users className="h-16 w-16 text-primary" />
-                    </div>
-                    <CardContent className="p-6">
-                      <h3 className="font-semibold text-xl mb-2 text-foreground group-hover:text-primary transition-colors">
-                        Our Community
-                      </h3>
-                      <p className="text-muted-foreground/80">
-                        Connect with fellow believers and grow together in faith
-                      </p>
-                      <div className="mt-4 flex items-center text-primary">
-                        <span className="text-sm font-medium">Meet Our Community</span>
-                        <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </motion.div>
+        {/* Hero Section */}
+        <section className="relative h-[80vh] min-h-[600px] flex items-center justify-center overflow-hidden">
+          <div className="absolute inset-0 z-0">
+            <Image
+              src="/gallery/fresh1.jpg"
+              alt="TPH Global"
+              fill
+              className="object-cover brightness-50"
+              priority
+            />
+          </div>
+          <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+              Step Into Your Destiny
+            </h1>
+            <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto">
+              The Birth Place of Generals
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                size="lg" 
+                variant="secondary"
+                className="bg-white hover:bg-white/90 text-primary hover:text-primary/90"
+                asChild
+              >
+                <Link href="/about">Learn More About Us</Link>
+              </Button>
+              <Button 
+                size="lg" 
+                variant="secondary"
+                className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+                asChild
+              >
+                <Link href="/sermons">Listen to Sermons</Link>
+              </Button>
             </div>
           </div>
         </section>
 
         {/* Featured Events Section */}
-        <section id="events" className="py-24 bg-background dark:bg-background/95">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-16">
-              <div>
-                <Badge variant="outline" className="mb-4 border-primary/20 text-primary">
-                  Upcoming
-                </Badge>
-                <h2 className="text-4xl font-bold text-foreground">Featured Events</h2>
-              </div>
-              <Link href="/events">
-                <Button variant="outline" className="mt-4 md:mt-0 border-primary/20 text-primary hover:bg-primary/5">
-                  View All Events
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <section className="py-16 px-4 sm:px-6 lg:px-8">
+          <div className="container mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold mb-8 text-center">Featured Events</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {FEATURED_EVENTS.map((event, index) => (
                 <motion.div
                   key={index}
@@ -303,47 +330,37 @@ export default function HomePage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
-                  <Card className="overflow-hidden border-border/50 bg-card shadow-lg hover:shadow-xl transition-all duration-300 h-full">
+                  <Card className="h-full">
                     <div className="aspect-video relative">
                       <Image
                         src={event.imageUrl}
                         alt={event.title}
                         fill
-                        className="object-cover"
+                        className="object-cover rounded-t-lg"
                       />
                       <div className="absolute top-4 right-4">
-                        <Badge className="bg-primary/90 hover:bg-primary text-white border-0">{event.type}</Badge>
+                        <Badge>{event.type}</Badge>
                       </div>
                     </div>
                     <CardContent className="p-6">
-                      <h3 className="font-semibold text-xl mb-3 text-foreground">{event.title}</h3>
-                      <div className="space-y-2 text-sm text-muted-foreground/80 mb-4">
+                      <h3 className="text-xl font-semibold mb-2">{event.title}</h3>
+                      <p className="text-muted-foreground text-sm mb-4">
+                        {event.description}
+                      </p>
+                      <div className="space-y-2 text-sm text-muted-foreground">
                         <p className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-2 text-primary" />
+                          <Calendar className="h-4 w-4 mr-2" />
                           {event.date}
                         </p>
                         <p className="flex items-center">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="lucide lucide-map-pin mr-2 text-primary"
-                          >
-                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                            <circle cx="12" cy="10" r="3" />
-                          </svg>
+                          <Clock className="h-4 w-4 mr-2" />
+                          {event.time}
+                        </p>
+                        <p className="flex items-center">
+                          <MapPin className="h-4 w-4 mr-2" />
                           {event.location}
                         </p>
                       </div>
-                      <Button variant="outline" className="w-full border-border/50 text-foreground hover:bg-primary/5 hover:text-primary">
-                        Register Now
-                      </Button>
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -351,6 +368,56 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* Gallery Section (Replacing Sermons) */}
+        <section className="relative h-[600px] overflow-hidden">
+          <div className="absolute inset-0 z-10 bg-black/50 flex flex-col items-center justify-center text-white">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-center">Our Gallery</h2>
+            <p className="text-lg md:text-xl mb-8 max-w-2xl text-center px-4">
+              Capturing moments of worship, fellowship, and community
+            </p>
+            <Link href="/gallery">
+              <Button 
+                variant="secondary" 
+                className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+              >
+                View Full Gallery
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+          
+          <div className="absolute inset-0">
+            <div className="h-full" ref={emblaRef}>
+              <div className="h-full flex">
+                {GALLERY_ITEMS.map((item) => (
+                  <div key={item.id} className="relative h-full flex-[0_0_100%]">
+                    <Image
+                      src={item.src}
+                      alt={item.alt}
+                      fill
+                      className="object-cover"
+                      priority
+                      sizes="100vw"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black to-transparent">
+                      <h3 className="text-2xl font-bold mb-2 text-white">{item.alt}</h3>
+                      <p className="text-white/80">{item.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <CarouselDots 
+              selectedIndex={selectedIndex}
+              length={GALLERY_ITEMS.length}
+              onClick={scrollTo}
+            />
+          </div>
+        </section>
+
+        {/* Blog Posts Section */}
+        <BlogSection />
 
         {/* Testimonials Section */}
         <section className="py-24 bg-muted/50 dark:bg-muted border-y border-border/10">
@@ -409,114 +476,45 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Latest Sermons Section */}
-        <section id="watch-sermons" className="py-24 bg-gray-900 dark:bg-background/95 text-white dark:text-foreground">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <Badge variant="outline" className="mb-4 border-white/20 dark:border-primary/20 text-white/80 dark:text-primary">
-                Featured
-              </Badge>
-              <h2 className="text-4xl font-bold">Latest Sermons</h2>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-              <div className="aspect-video bg-black/40 rounded-lg overflow-hidden relative group">
-                <Image
-                  src="/gallery/fresh13.jpg"
-                  alt="Latest Sermon"
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                  <Button className="rounded-full w-16 h-16 p-0 bg-primary/90 hover:bg-primary hover:scale-110 transition-all duration-300">
-                    <Play className="h-6 w-6 fill-white ml-1" />
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <Badge className="bg-primary/20 text-primary border-primary/30">Latest Sermon</Badge>
-                <h3 className="text-3xl font-bold text-white dark:text-foreground">The Power of Unwavering Faith</h3>
-                <p className="text-white/70 dark:text-muted-foreground leading-relaxed">
-                  In this powerful sermon, we explore how maintaining unwavering faith during challenging times can
-                  transform your spiritual journey and open doors to divine breakthroughs.
-                </p>
-                <div className="flex items-center space-x-4 text-white/60 dark:text-muted-foreground">
-                  <div className="flex items-center">
-                    <User className="h-4 w-4 mr-2" />
-                    <span>Pastor James Wilson</span>
+        {/* Podcast Section */}
+        <section className="py-24 bg-background">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-4xl font-bold mb-6 text-center">Listen to Our Podcast</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {podcastEpisodes.map((episode, index) => (
+                <Card key={episode.id} className="h-full">
+                  <div className="aspect-video relative">
+                    <Image
+                      src={episode.imageUrl}
+                      alt={episode.title}
+                      fill
+                      className="object-cover rounded-t-lg"
+                    />
                   </div>
-                  <div className="flex items-center">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    <span>March 28, 2025</span>
-                  </div>
-                </div>
-                <div className="pt-4">
-                  <Link href="/sermons">
-                    <Button variant="outline" className="border-white/20 dark:border-primary/20 text-white dark:text-primary hover:bg-white/10 dark:hover:bg-primary/5">
-                      View All Sermons
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Blog Section */}
-        <section className="py-24 bg-background dark:bg-background/95">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <Badge variant="outline" className="mb-4 border-primary/20 text-primary">
-                Insights
-              </Badge>
-              <h2 className="text-4xl font-bold text-foreground">Latest From Our Blog</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {BLOG_POSTS.map((post, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="group"
-                >
-                  <Card className="overflow-hidden border-border/50 bg-card shadow-lg h-full">
-                    <div className="aspect-video relative overflow-hidden">
-                      <Image
-                        src={post.imageUrl}
-                        alt={post.title}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
+                  <CardContent className="p-6">
+                    <h3 className="text-xl font-semibold mb-2">{episode.title}</h3>
+                    <p className="text-muted-foreground text-sm mb-4">
+                      {episode.description}
+                    </p>
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      <p className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        {episode.date}
+                      </p>
+                      <p className="flex items-center">
+                        <Clock className="h-4 w-4 mr-2" />
+                        {formatDistanceToNow(new Date(episode.date), { addSuffix: true })}
+                      </p>
                     </div>
-                    <CardContent className="p-6">
-                      <div className="flex items-center text-sm text-muted-foreground/80 mb-3">
-                        <Calendar className="h-4 w-4 mr-1" />
-                        {post.date}
-                      </div>
-                      <h3 className="font-semibold text-xl mb-3 text-foreground group-hover:text-primary transition-colors">
-                        {post.title}
-                      </h3>
-                      <p className="text-muted-foreground/80 mb-4 line-clamp-3">{post.excerpt}</p>
-                      <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                        <div className="flex items-center">
-                          <div className="h-8 w-8 rounded-full bg-primary/10 dark:bg-primary/5 flex items-center justify-center text-primary font-medium">
-                            {post.author
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </div>
-                          <span className="ml-2 text-sm text-foreground">{post.author}</span>
-                        </div>
-                        <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/5">
-                          Read More
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                    <Button 
+                      variant="secondary" 
+                      className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+                    >
+                      Listen Now
+                      <Play className="ml-2 h-4 w-4" />
+                    </Button>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           </div>
@@ -531,16 +529,11 @@ export default function HomePage() {
               positive impact in the world.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/auth">
-                <Button size="lg" className="bg-white text-primary hover:bg-white/90 text-base px-8 w-full sm:w-auto">
-                  Sign Up Now
-                </Button>
-              </Link>
               <Link href="/about">
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="lg"
-                  className="border-white text-white hover:bg-white/10 text-base px-8 w-full sm:w-auto"
+                  className="bg-white/10 hover:bg-white/20 text-white border-white/20 text-base px-8 w-full sm:w-auto"
                 >
                   Learn More
                 </Button>
@@ -549,7 +542,7 @@ export default function HomePage() {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   )
 }
-

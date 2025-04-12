@@ -1,8 +1,10 @@
+import { ConvexError } from "convex/values";
+
 export default {
   providers: [
     {
-      domain: process.env.CLERK_SIGNING_KEY,
+      domain: "https://nearby-adder-51.clerk.accounts.dev",
       applicationID: "convex",
     },
-  ]
+  ],
 };

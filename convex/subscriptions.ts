@@ -63,7 +63,7 @@ export const getUserSubscriptionStatus = query({
 
         const subscription = await ctx.db
             .query("subscriptions")
-            .withIndex("userId", (q) => q.eq("userId", identity.subject))
+            .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
             .first();
 
         const hasActiveSubscription = subscription?.status === "active";
@@ -71,7 +71,8 @@ export const getUserSubscriptionStatus = query({
     }
 });
 
-export const getUserSubscription = query({
+export const getSubscription = query({
+    args: {},
     handler: async (ctx) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
@@ -80,9 +81,34 @@ export const getUserSubscription = query({
 
         return await ctx.db
             .query("subscriptions")
-            .withIndex("userId", (q) => q.eq("userId", identity.subject))
+            .filter((q) => q.eq(q.field("userId"), identity.subject))
             .first();
-    }
+    },
+});
+
+export const createSubscription = mutation({
+    args: {
+        planId: v.string(),
+        status: v.string(),
+        currentPeriodStart: v.string(),
+        currentPeriodEnd: v.string(),
+        cancelAtPeriodEnd: v.boolean(),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("Not authenticated");
+        }
+
+        return await ctx.db.insert("subscriptions", {
+            userId: identity.subject,
+            planId: args.planId,
+            status: args.status,
+            currentPeriodStart: args.currentPeriodStart,
+            currentPeriodEnd: args.currentPeriodEnd,
+            cancelAtPeriodEnd: args.cancelAtPeriodEnd,
+        });
+    },
 });
 
 // export const subscriptionStoreWebhook = mutation({

@@ -2,31 +2,23 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
 export const subscribe = mutation({
-  args: { email: v.string() },
+  args: {
+    email: v.string(),
+    name: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
-    // Check if email already exists
-    const existing = await ctx.db
-      .query("subscribers")
-      .withIndex("by_email", (q) => q.eq("email", args.email))
-      .first();
+    const subscriptionDate = Date.now();
+    const subscribedAt = new Date().toISOString();
 
-    if (existing) {
-      if (existing.status === "unsubscribed") {
-        // Reactivate subscription
-        await ctx.db.patch(existing._id, { status: "active" });
-        return { status: "resubscribed" };
-      }
-      return { status: "already_subscribed" };
-    }
-
-    // Add new subscriber
     await ctx.db.insert("subscribers", {
       email: args.email,
-      subscriptionDate: Date.now(),
+      name: args.name,
+      subscriptionDate,
+      subscribedAt,
       status: "active",
     });
 
-    return { status: "subscribed" };
+    return { success: true };
   },
 });
 

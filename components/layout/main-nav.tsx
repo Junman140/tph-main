@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
@@ -9,10 +8,10 @@ import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Menu, X, Sun, Moon } from "lucide-react"
 import { useTheme } from "next-themes"
-import { UserButton, SignInButton, SignedIn, SignedOut } from "@clerk/nextjs"
+import { SignIn, SignUp, UserButton, SignedIn, SignedOut } from "@clerk/nextjs"
 
 // Separate theme toggle component
 function ThemeToggle() {
@@ -29,7 +28,7 @@ function ThemeToggle() {
 
   return (
     <Button
-      variant="ghost"
+      type="button"
       size="icon"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       className="rounded-full w-8 h-8"
@@ -50,144 +49,203 @@ export function MainNav() {
 
   useEffect(() => {
     setMounted(true)
-  }, [])
-
-  useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 10) {
-        setIsScrolled(true)
-      } else {
-        setIsScrolled(false)
-      }
+      setIsScrolled(window.scrollY > 0)
     }
-
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  const isActive = (path: string) => {
-    return pathname === path
-  }
-
   return (
-    <nav
+    <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? "bg-background/95 backdrop-blur-md shadow-md py-3" : "bg-transparent py-5"
+        isScrolled ? "bg-background/80 backdrop-blur-sm shadow-sm" : ""
       }`}
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <Link href="/" className="flex items-center">
-              <div className="relative h-10 w-auto">
-                <Image src="/TPH LOGO 2.png" alt="TPH Global" width={40} height={20} priority />
-              </div>
+      <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          <Link href="/" className="flex items-center">
+            <img src="/TPH LOGO 2.png" alt="TPH Logo" className="h-10 w-auto" />
+          </Link>
+          
+          {/* Center navigation items */}
+          <div className="hidden md:flex flex-1 justify-center space-x-8">
+            <Link
+              href="/sermons"
+              className={`text-base font-medium transition-colors hover:text-primary ${
+                pathname === "/sermons" ? "text-primary" : "text-foreground/60"
+              }`}
+            >
+              Sermons
             </Link>
-            <div className="hidden md:flex ml-10 space-x-8">
-              <NavLink href="/sermons" active={isActive("/sermons")}>
-                Sermons
-              </NavLink>
-              <NavLink href="/events" active={isActive("/events")}>
-                Events
-              </NavLink>
-              <NavLink href="/gallery" active={isActive("/gallery")}>
-                Gallery
-              </NavLink>
-              <NavLink href="/prayer" active={isActive("/prayer")}>
-                Prayer
-              </NavLink>
-              <NavLink href="/about" active={isActive("/about")}>
-                About Us
-              </NavLink>
-            </div>
+            <Link
+              href="/events"
+              className={`text-base font-medium transition-colors hover:text-primary ${
+                pathname === "/events" ? "text-primary" : "text-foreground/60"
+              }`}
+            >
+              Events
+            </Link>
+            <Link
+              href="/gallery"
+              className={`text-base font-medium transition-colors hover:text-primary ${
+                pathname === "/gallery" ? "text-primary" : "text-foreground/60"
+              }`}
+            >
+              Gallery
+            </Link>
+            <Link
+              href="/bible"
+              className={`text-base font-medium transition-colors hover:text-primary ${
+                pathname === "/bible" ? "text-primary" : "text-foreground/60"
+              }`}
+            >
+              Bible
+            </Link>
+            <Link
+              href="/prayer"
+              className={`text-base font-medium transition-colors hover:text-primary ${
+                pathname === "/prayer" ? "text-primary" : "text-foreground/60"
+              }`}
+            >
+              Prayer
+            </Link>
+            <Link
+              href="/about"
+              className={`text-base font-medium transition-colors hover:text-primary ${
+                pathname === "/about" ? "text-primary" : "text-foreground/60"
+              }`}
+            >
+              About Us
+            </Link>
           </div>
 
           <div className="flex items-center space-x-4">
-            <div className="hidden md:flex items-center space-x-4">
-              <ThemeToggle />
-
-              <SignedIn>
-                <Button variant="outline" className="border-primary/20 text-primary">
-                  Donate
-                </Button>
-                <UserButton
-                  afterSignOutUrl="/"
-                  appearance={{
-                    baseTheme: mounted ? (theme === "dark" ? "dark" as any : "light" as any) : "light" as any,
-                    elements: {
-                      avatarBox: "h-10 w-10",
-                    }
-                  }}
-                />
-              </SignedIn>
-
-              <SignedOut>
-                <SignInButton mode="modal">
-                  <Button variant="outline">Sign In</Button>
-                </SignInButton>
-                <SignInButton mode="modal">
-                  <Button>Join Us</Button>
-                </SignInButton>
-              </SignedOut>
-            </div>
+            <ThemeToggle />
+            <SignedIn>
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: "w-10 h-10",
+                  },
+                }}
+              />
+            </SignedIn>
+            <SignedOut>
+              <Button asChild variant="ghost" className="hidden md:inline-flex">
+                <Link href="/sign-in">Sign In</Link>
+              </Button>
+              <Button asChild className="hidden md:inline-flex">
+                <Link href="/sign-up">Sign Up</Link>
+              </Button>
+            </SignedOut>
 
             {/* Mobile menu button */}
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
-                  {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                <Button
+                  variant="ghost"
+                  className="md:hidden"
+                  size="icon"
+                >
+                  <Menu className="h-6 w-6" />
+                  <span className="sr-only">Open menu</span>
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                <SheetHeader>
+                  <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                </SheetHeader>
                 <div className="flex flex-col h-full">
-                  <div className="flex-grow py-8">
+                  <div className="flex-1 overflow-y-auto py-6 px-4">
+                    <div className="flex items-center justify-between mb-8">
+                      <Link href="/" className="flex items-center space-x-2" onClick={() => setIsOpen(false)}>
+                        <img src="/TPH LOGO 2.png" alt="TPH Logo" className="h-10 w-auto" />
+                      </Link>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <X className="h-6 w-6" />
+                      </Button>
+                    </div>
                     <div className="flex flex-col space-y-6">
-                      <ThemeToggle />
-                      <MobileNavLink href="/sermons" onClick={() => setIsOpen(false)}>
+                      <Link
+                        href="/sermons"
+                        className={`text-lg font-medium hover:text-primary ${
+                          pathname === "/sermons" ? "text-primary" : "text-foreground/60"
+                        }`}
+                        onClick={() => setIsOpen(false)}
+                      >
                         Sermons
-                      </MobileNavLink>
-                      <MobileNavLink href="/events" onClick={() => setIsOpen(false)}>
+                      </Link>
+                      <Link
+                        href="/events"
+                        className={`text-lg font-medium hover:text-primary ${
+                          pathname === "/events" ? "text-primary" : "text-foreground/60"
+                        }`}
+                        onClick={() => setIsOpen(false)}
+                      >
                         Events
-                      </MobileNavLink>
-                      <MobileNavLink href="/gallery" onClick={() => setIsOpen(false)}>
+                      </Link>
+                      <Link
+                        href="/gallery"
+                        className={`text-lg font-medium hover:text-primary ${
+                          pathname === "/gallery" ? "text-primary" : "text-foreground/60"
+                        }`}
+                        onClick={() => setIsOpen(false)}
+                      >
                         Gallery
-                      </MobileNavLink>
-                      <MobileNavLink href="/prayer" onClick={() => setIsOpen(false)}>
+                      </Link>
+                      <Link
+                        href="/bible"
+                        className={`text-lg font-medium hover:text-primary ${
+                          pathname === "/bible" ? "text-primary" : "text-foreground/60"
+                        }`}
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Bible
+                      </Link>
+                      <Link
+                        href="/prayer"
+                        className={`text-lg font-medium hover:text-primary ${
+                          pathname === "/prayer" ? "text-primary" : "text-foreground/60"
+                        }`}
+                        onClick={() => setIsOpen(false)}
+                      >
                         Prayer
-                      </MobileNavLink>
-                      <MobileNavLink href="/about" onClick={() => setIsOpen(false)}>
+                      </Link>
+                      <Link
+                        href="/about"
+                        className={`text-lg font-medium hover:text-primary ${
+                          pathname === "/about" ? "text-primary" : "text-foreground/60"
+                        }`}
+                        onClick={() => setIsOpen(false)}
+                      >
                         About Us
-                      </MobileNavLink>
+                      </Link>
                     </div>
                   </div>
-
-                  <div className="border-t py-6">
+                  <div className="border-t border-border px-4 py-6">
                     <SignedIn>
-                      <div className="space-y-4">
-                        <UserButton
-                          afterSignOutUrl="/"
-                          appearance={{
-                            baseTheme: mounted ? (theme === "dark" ? "dark" as any : "light" as any) : "light" as any,
-                            elements: {
-                              avatarBox: "h-10 w-10",
-                            }
-                          }}
-                        />
+                      <div className="flex items-center space-x-4">
+                        <UserButton />
+                        <span className="text-sm font-medium">Account</span>
                       </div>
                     </SignedIn>
-
                     <SignedOut>
                       <div className="flex flex-col space-y-3">
-                        <SignInButton mode="modal">
-                          <Button variant="outline" className="w-full" onClick={() => setIsOpen(false)}>
+                        <Button asChild variant="outline" className="w-full">
+                          <Link href="/sign-in" onClick={() => setIsOpen(false)}>
                             Sign In
-                          </Button>
-                        </SignInButton>
-                        <SignInButton mode="modal">
-                          <Button className="w-full" onClick={() => setIsOpen(false)}>
-                            Join Us
-                          </Button>
-                        </SignInButton>
+                          </Link>
+                        </Button>
+                        <Button asChild className="w-full">
+                          <Link href="/sign-up" onClick={() => setIsOpen(false)}>
+                            Sign Up
+                          </Link>
+                        </Button>
                       </div>
                     </SignedOut>
                   </div>
@@ -196,56 +254,7 @@ export function MainNav() {
             </Sheet>
           </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+    </header>
   )
 }
-
-function NavLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
-  return (
-    <Link href={href} className="relative group">
-      <span
-        className={`text-sm font-medium transition-colors ${
-          active ? "text-primary" : "text-foreground/70 hover:text-foreground"
-        }`}
-      >
-        {children}
-      </span>
-      {active && (
-        <motion.span
-          layoutId="activeIndicator"
-          className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        />
-      )}
-    </Link>
-  )
-}
-
-function MobileNavLink({
-  href,
-  children,
-  onClick,
-}: {
-  href: string
-  children: React.ReactNode
-  onClick?: () => void
-}) {
-  const pathname = usePathname()
-  const isActive = pathname === href
-
-  return (
-    <Link
-      href={href}
-      className={`block px-2 py-1 text-lg font-medium transition-colors ${
-        isActive ? "text-primary" : "text-foreground/70 hover:text-foreground"
-      }`}
-      onClick={onClick}
-    >
-      {children}
-    </Link>
-  )
-}
-

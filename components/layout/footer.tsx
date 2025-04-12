@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Facebook, Twitter, Instagram, Youtube, ArrowUp, Mail, Phone, MapPin, Send } from "lucide-react"
-import { SubscriptionForm } from "@/components/subscription-form"
+import Image from "next/image"
 
 export function Footer() {
   const scrollToTop = () => {
@@ -14,29 +14,18 @@ export function Footer() {
 
   return (
     <footer className="bg-gray-950 text-white">
-      {/* Newsletter Section */}
-      <div className="border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-10 items-center">
-            <div>
-              <h3 className="text-2xl font-bold mb-4">Stay Connected</h3>
-              <p className="text-white/70 max-w-md">
-                Subscribe to our newsletter to receive updates on sermons, events, and familynews.
-              </p>
-            </div>
-            <div>
-              <SubscriptionForm />
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Main Footer */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           {/* About Column */}
           <div className="space-y-4">
-            <img src="\TPH LOGO 2.png" alt="TPH Global" className="h-10 w-auto mb-4" />
+            <Image 
+              src="/TPH LOGO 2.png" 
+              alt="TPH Global" 
+              width={160} 
+              height={40} 
+              className="h-10 w-auto mb-4"
+            />
             <p className="text-white/70 text-sm">
               TPH Global is dedicated to raising Kingdom generals through principles of loyalty, holiness, and Anakazo
               empowerment.

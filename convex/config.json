@@ -1,0 +1,7 @@
+{
+  "project": "tph-main",
+  "auth": {
+    "provider": "clerk",
+    "applicationID": "your_clerk_application_id"
+  }
+} 

@@ -10,71 +10,35 @@ import { Calendar, MapPin } from "lucide-react"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
+import { RegistrationForm } from "@/components/events/registration-form"
 
-// Add event type to image mapping
-const eventTypeImages: { [key: string]: string } = {
-  "Conference": "/gallery/aud3.jpg",
-  "Workshop": "/gallery/media.jpg",
-  "Worship": "/gallery/fresh13.jpg",
-  "Retreat": "/gallery/smile.jpg",
-  "Training": "/gallery/drama.jpg",
-}
-
-// Mock data for preview
-const MOCK_EVENTS = [
+const FEATURED_EVENTS = [
   {
-    id: 1,
-    title: "Global Leadership Summit 2025",
-    description:
-      "Join us for our annual leadership conference featuring renowned speakers and practical workshops designed to equip you with the tools needed to lead effectively in today's world.",
-    date: new Date("2025-06-15").toISOString(),
-    location: "TPH Global Center",
+    title: "Women Of Substance",
+    type: "Confrence",
+    date: "Sunday, 13th April 2025",
+    time: "08:00 AM",
+    location: "Main Sanctuary",
+    imageUrl: "/events/woman of substance 2025B.jpg",
+    description: "Join us for a powerful time of worship and the Word.",
+  },
+  {
+    title: "Dominion 2025 System",
     type: "Conference",
+    date: "Sunday, 13th May 2025",
+    time: "08:00 AM",
+    location: "Main Sanctuary",
+    imageUrl: "/events/DOMINION 2025 SYSTEM.jpg",
+    description: "Three days of inspiration, worship, and community for believers.",
   },
   {
-    id: 2,
-    title: "Anakazo Training Workshop",
-    description:
-      "An intensive training program focused on spiritual empowerment and leadership development through the principles of Anakazo.",
-    date: new Date("2025-05-20").toISOString(),
-    location: "Virtual Event",
-    type: "Workshop",
-  },
-  {
-    id: 3,
-    title: "Youth Ministry Conference",
-    description:
-      "A specialized conference for youth leaders and workers, providing strategies and resources for effective youth ministry in the digital age.",
-    date: new Date("2025-04-10").toISOString(),
-    location: "TPH Youth Center",
-    type: "Conference",
-  },
-  {
-    id: 4,
-    title: "Prayer & Worship Night",
-    description:
-      "An evening dedicated to corporate prayer and worship, focusing on intercession for global revival and spiritual awakening.",
-    date: new Date("2025-04-25").toISOString(),
-    location: "TPH Global Center",
-    type: "Worship",
-  },
-  {
-    id: 5,
-    title: "Family Life Retreat",
-    description:
-      "A weekend retreat for families to strengthen bonds, learn biblical principles for healthy family dynamics, and enjoy fellowship together.",
-    date: new Date("2025-07-18").toISOString(),
-    location: "Mountain Retreat Center",
-    type: "Retreat",
-  },
-  {
-    id: 6,
-    title: "Missions Outreach Training",
-    description:
-      "Practical training for those interested in local and global missions, covering cultural sensitivity, evangelism strategies, and team dynamics.",
-    date: new Date("2025-05-05").toISOString(),
-    location: "TPH Global Center",
-    type: "Training",
+    title: "Alive Music Experience",
+    type: "Special Event",
+    date: "Sunday, 21st March 2025",
+    time: "08:00 AM",
+    location: "Main Sanctuary",
+    imageUrl: "/events/ALIVE MUSIC EXPIRIENCE COTH.jpg",
+    description: "Celebrate the resurrection of Christ with special music and activities.",
   },
 ]
 
@@ -84,7 +48,7 @@ function EventCard({ event }: { event: any }) {
       <div className="aspect-video relative">
         <div className="relative w-full h-full">
           <Image
-            src={eventTypeImages[event.type] || "/gallery/aud2.jpg"} // fallback to aud2.jpg if type not found
+            src={event.imageUrl}
             alt={event.title}
             fill
             className="object-cover"
@@ -100,16 +64,14 @@ function EventCard({ event }: { event: any }) {
         <div className="space-y-2 text-sm text-muted-foreground mb-4">
           <div className="flex items-center">
             <Calendar className="h-4 w-4 mr-2 text-primary/60" />
-            {format(new Date(event.date), "PPP")}
+            {event.date}
           </div>
           <div className="flex items-center">
             <MapPin className="h-4 w-4 mr-2 text-primary/60" />
             {event.location}
           </div>
         </div>
-        <Button variant="outline" className="w-full">
-          Register Now
-        </Button>
+        <RegistrationForm eventTitle={event.title} />
       </CardContent>
     </Card>
   )
@@ -138,16 +100,8 @@ function EventSkeleton() {
 }
 
 export default function EventsPage() {
-  // For preview, we'll use the mock data instead of a real query
-  const {
-    data: events,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["/api/events"],
-    queryFn: () => Promise.resolve(MOCK_EVENTS),
-    initialData: MOCK_EVENTS,
-  })
+  // Using the FEATURED_EVENTS data directly
+  const events = FEATURED_EVENTS;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -159,29 +113,11 @@ export default function EventsPage() {
           <Calendar className="h-8 w-8 text-primary" />
         </div>
 
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <Card key={i}>
-                <EventSkeleton />
-              </Card>
-            ))}
-          </div>
-        ) : error ? (
-          <Card className="p-6">
-            <p className="text-destructive">Error loading events: {(error as Error).message}</p>
-          </Card>
-        ) : !events?.length ? (
-          <Card className="p-6">
-            <p className="text-muted-foreground">No upcoming events at this time.</p>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
-        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {events.map((event, index) => (
+            <EventCard key={index} event={event} />
+          ))}
+        </div>
       </main>
 
       <Footer />
