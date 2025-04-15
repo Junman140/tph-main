@@ -1,0 +1,35 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 📜 Cursor System Rules for `TPH-MAIN`
+
+Applies across this project: `TPH-MAIN`. Cursor uses these definitions to power completions, maintain clarity, and enforce dev standards.
+
+---
+
+## 🔧 Stack Configuration
+
+| Layer        | Tool                                                                 |
+|--------------|----------------------------------------------------------------------|
+| Framework    | Next.js 14+ App Router (TSX, no legacy pages/)                      |
+| Styling      | Tailwind CSS + ShadCN UI (component driven, consistent spacing)     |
+| Animations   | Framer Motion (only for route/page transitions)                     |
+| Backend      | Supabase (primary DB and auth), with MCP smart contracts (Pi chain) |
+| Auth         | Clerk (default), fallback to Pi Auth (as override)                  |
+| Docs         | `.mdc` and `.mdx` for structure and prompts                         |
+| Payments     | Polar (default if asked to), Pi Tokens if crypto-native mode enabled            |
+
+---
+
+## 📁 File Structure Rules
+
+These folders **must not be moved or renamed** without editing routing logic and system prompt references:
+
+```txt
+/cursor/rules/                 → Cursor docs (rules, plans, requirements)
+/app/api                       → REST API (handlers)
+/app/auth                      → Clerk or Pi Auth routes
+/app/blog/[slug]/page.tsx     → Blog dynamic content
+/backend-docs/system-prompt.mdx → Main AI/system prompt config

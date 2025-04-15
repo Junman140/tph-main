@@ -111,6 +111,14 @@ export function MainNav() {
               Prayer
             </Link>
             <Link
+              href="/blog"
+              className={`text-base font-medium transition-colors hover:text-primary ${
+                pathname === "/blog" ? "text-primary" : "text-foreground/60"
+              }`}
+            >
+              Blog
+            </Link>
+            <Link
               href="/about"
               className={`text-base font-medium transition-colors hover:text-primary ${
                 pathname === "/about" ? "text-primary" : "text-foreground/60"
@@ -215,6 +223,15 @@ export function MainNav() {
                         onClick={() => setIsOpen(false)}
                       >
                         Prayer
+                      </Link>
+                      <Link
+                        href="/blog"
+                        className={`text-lg font-medium hover:text-primary ${
+                          pathname === "/blog" ? "text-primary" : "text-foreground/60"
+                        }`}
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Blog
                       </Link>
                       <Link
                         href="/about"

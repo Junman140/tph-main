@@ -1,7 +1,6 @@
 "use client"
 
-import { useQuery } from "convex/react"
-import { api } from "@/convex/_generated/api"
+import { compareDesc } from 'date-fns'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,10 +8,22 @@ import { format } from "date-fns"
 import Link from "next/link"
 import { Search } from "lucide-react"
 import { MainNav } from "@/components/layout/main-nav"
-import { Footer } from "@/components/layout/footer"
+
+// Temporary dummy data until we implement a proper CMS
+const posts = [
+  {
+    _id: '1',
+    title: 'Sample Blog Post',
+    date: '2024-04-14',
+    readingTime: 5,
+    description: 'This is a sample blog post description.',
+    tags: ['sample', 'test'],
+    slug: 'sample-post'
+  }
+]
 
 export default function BlogPage() {
-  const posts = useQuery(api.blog.getPosts)
+  const sortedPosts = posts.sort((a, b) => compareDesc(new Date(a.date), new Date(b.date)))
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -35,17 +46,17 @@ export default function BlogPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {posts?.map((post) => (
+              {sortedPosts.map((post) => (
                 <Link key={post._id} href={`/blog/${post.slug}`}>
                   <Card className="h-full hover:shadow-lg transition-shadow">
                     <CardHeader>
                       <CardTitle>{post.title}</CardTitle>
                       <CardDescription>
-                        {format(post.publishedAt, "MMMM d, yyyy")} • {post.readingTime} min read
+                        {format(new Date(post.date), "MMMM d, yyyy")} • {post.readingTime} min read
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-muted-foreground">{post.excerpt}</p>
+                      <p className="text-muted-foreground">{post.description}</p>
                       <div className="mt-4 flex flex-wrap gap-2">
                         {post.tags.map((tag) => (
                           <span
@@ -64,7 +75,6 @@ export default function BlogPage() {
           </div>
         </div>
       </div>
-      <Footer />
     </div>
   )
 }

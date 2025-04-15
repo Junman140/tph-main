@@ -1,17 +1,16 @@
 "use client"
 
 import { MainNav } from "@/components/layout/main-nav"
-import { Footer } from "@/components/layout/footer"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card, CardContent } from "@/components/ui/card"
 import { Shield, Heart, Crown, Globe } from "lucide-react"
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col">
       <MainNav />
 
-      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-16">
+      <main className="flex-grow container mx-auto px-4 py-8 mt-16">
         {/* Vision & Mission */}
         <section className="mb-16">
           <h1 className="text-4xl font-bold mb-8">About TPH Global</h1>
@@ -20,7 +19,7 @@ export default function AboutPage() {
               <CardContent className="p-6">
                 <h2 className="text-2xl font-semibold mb-4">Our Vision</h2>
                 <p className="text-muted-foreground">
-                  TPH Global aims to create a digital ecosystem for raising "Kingdom generals" through principles of
+                  TPH Global aims at raising "Kingdom generals" through principles of
                   loyalty, holiness, and Anakazo empowerment.
                 </p>
               </CardContent>
@@ -147,8 +146,6 @@ export default function AboutPage() {
           </Card>
         </section>
       </main>
-
-      <Footer />
     </div>
   )
 }

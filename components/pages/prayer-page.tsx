@@ -1,9 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { useQuery, useMutation } from "convex/react"
-import { useAuth } from "@clerk/nextjs"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useUser } from "@clerk/nextjs"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
@@ -15,10 +14,35 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
-import { Heart } from "lucide-react"
-import { Footer } from "@/components/layout/footer"
+import { Heart, Check } from "lucide-react"
 import { TestimonySection } from "./testimony-section"
-import { api } from "@/convex/_generated/api"
+import { useSupabase } from "@/app/providers/supabase-provider"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { format } from 'date-fns'
+import { Badge } from "@/components/ui/badge"
+import { MainNav } from "@/components/layout/main-nav"
+
+interface Prayer {
+  id: string;
+  created_at: string;
+  user_id: string;
+  title: string;
+  content: string;
+  category: string;
+  is_private: boolean;
+  status: 'pending' | 'answered';
+  answered_at: string | null;
+  tags: string[];
+  prayer_count: number;
+  supporting_verses: string[];
+  verse_reference: string | null;
+}
+
+interface TestimonyFormData {
+  title: string;
+  content: string;
+  isAnonymous: boolean;
+}
 
 const prayerSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -28,60 +52,120 @@ const prayerSchema = z.object({
   verseReference: z.string().optional(),
 })
 
-function PrayerCard({ prayer, onStatusChange }: { prayer: any; onStatusChange?: () => void }) {
+function PrayerCard({ prayer }: { prayer: Prayer }) {
   const { toast } = useToast()
-  const [isSubmittingTestimony, setIsSubmittingTestimony] = useState(false)
-  const [testimonyData, setTestimonyData] = useState({
+  const { user } = useUser();
+  const supabase = useSupabase();
+  const queryClient = useQueryClient();
+
+  const [showTestimonyForm, setShowTestimonyForm] = useState(false)
+  const [testimonyData, setTestimonyData] = useState<TestimonyFormData>({
     title: "",
     content: "",
     isAnonymous: false,
   })
 
-  const markAsAnsweredMutation = useMutation(api.prayers.markPrayerAsAnswered);
+  const markAsAnsweredMutation = useMutation({
+    mutationFn: async (data: TestimonyFormData) => {
+      if (!user || !supabase) throw new Error("User or Supabase client not available");
 
-  const supportPrayerMutation = useMutation(api.prayers.supportPrayer);
+      const { error: prayerError } = await supabase
+        .from('prayers')
+        .update({ status: 'answered', answered_at: new Date().toISOString() })
+        .eq('id', prayer.id);
 
-  const handleMarkAsAnswered = async () => {
-    try {
-      await markAsAnsweredMutation.mutate({
-        prayerId: prayer._id,
-        testimonyTitle: testimonyData.title,
-        testimonyContent: testimonyData.content,
-        isAnonymous: testimonyData.isAnonymous,
-      })
-      if (onStatusChange) onStatusChange()
-      setIsSubmittingTestimony(false)
+      if (prayerError) throw prayerError;
+
+      const { error: testimonyError } = await supabase
+        .from('testimonies')
+        .insert({
+          user_id: user.id,
+          prayer_id: prayer.id,
+          title: data.title,
+          content: data.content,
+          is_anonymous: data.isAnonymous,
+        });
+
+      if (testimonyError) throw testimonyError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prayers', user?.id] });
+      setShowTestimonyForm(false);
+      setTestimonyData({ title: "", content: "", isAnonymous: false });
       toast({
         title: "Prayer marked as answered",
-        description: "Your testimony has been shared with the community.",
+        description: "Your testimony has been shared.",
       })
-    } catch (error) {
+    },
+    onError: (error: any) => {
+      console.error("Error marking prayer as answered:", error);
       toast({
         title: "Error",
-        description: "Failed to mark prayer as answered",
+        description: error.message || "Failed to mark prayer as answered",
         variant: "destructive",
       });
-    }
-  }
+    },
+  });
 
-  const handleSupportPrayer = async () => {
-    try {
-      await supportPrayerMutation.mutate({
-        prayerId: prayer._id,
-        commitment: "once",
-      })
-      if (onStatusChange) onStatusChange()
+  const supportPrayerMutation = useMutation({
+    mutationFn: async () => {
+      if (!user || !supabase) throw new Error("User or Supabase client not available");
+
+      const { data: existingSupport, error: checkError } = await supabase
+        .from('prayer_support')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('prayer_id', prayer.id)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+      if (existingSupport) {
+        toast({ title: "Already Supported", description: "You are already supporting this prayer.", variant: "default" });
+        return;
+      }
+
+      const { error: supportError } = await supabase
+        .from('prayer_support')
+        .insert({ user_id: user.id, prayer_id: prayer.id, commitment: 'once' });
+
+      if (supportError) throw supportError;
+
+      const { error: rpcError } = await supabase.rpc('increment_prayer_count', {
+        prayer_id_param: prayer.id
+      });
+
+      if (rpcError) {
+        console.error("Failed to increment prayer count:", rpcError);
+        throw new Error("Failed to update prayer count.");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prayers', user?.id] });
       toast({
         title: "Prayer supported",
-        description: "You are now supporting this prayer request.",
+        description: "Thank you for supporting this prayer request.",
       })
-    } catch (error) {
+    },
+    onError: (error: any) => {
+      console.error("Error supporting prayer:", error);
       toast({
         title: "Error",
-        description: "Failed to support prayer",
+        description: error.message || "Failed to support prayer",
         variant: "destructive",
       });
+    },
+  });
+
+  const handleMarkAsAnswered = () => {
+    if (!testimonyData.title || !testimonyData.content) {
+      toast({ title: "Missing Information", description: "Please provide a title and content for your testimony.", variant: "destructive" });
+      return;
     }
+    markAsAnsweredMutation.mutate(testimonyData);
+  }
+
+  const handleSupportPrayer = () => {
+    supportPrayerMutation.mutate();
   }
 
   return (
@@ -91,17 +175,13 @@ function PrayerCard({ prayer, onStatusChange }: { prayer: any; onStatusChange?: 
           <div className="space-y-1">
             <h3 className="font-semibold">{prayer.title}</h3>
             <p className="text-sm text-muted-foreground">
-              {format(new Date(prayer.createdAt), "PPP")}
+              {format(new Date(prayer.created_at), "PPP")}
             </p>
           </div>
           <Badge
             variant={prayer.status === "answered" ? "default" : "outline"}
             className={`ml-2 ${
-              prayer.status === "answered"
-                ? "bg-green-500 hover:bg-green-600"
-                : prayer.status === "praying"
-                ? "text-blue-500 border-blue-500"
-                : ""
+              prayer.status === "answered" && "bg-green-500 hover:bg-green-600"
             }`}
           >
             {prayer.status}
@@ -110,9 +190,9 @@ function PrayerCard({ prayer, onStatusChange }: { prayer: any; onStatusChange?: 
 
         <p className="text-sm mb-4">{prayer.content}</p>
 
-        {prayer.supportingVerses?.length > 0 && (
+        {prayer.supporting_verses?.length > 0 && (
           <div className="mb-4 p-3 bg-muted rounded-lg">
-            <p className="text-sm italic">{prayer.supportingVerses.join(" • ")}</p>
+            <p className="text-sm italic">{prayer.supporting_verses.join(" • ")}</p>
           </div>
         )}
 
@@ -123,16 +203,17 @@ function PrayerCard({ prayer, onStatusChange }: { prayer: any; onStatusChange?: 
               size="sm"
               className="space-x-2"
               onClick={handleSupportPrayer}
+              disabled={supportPrayerMutation.isPending}
             >
               <Heart className="h-4 w-4" />
-              <span>{prayer.prayerCount || 0}</span>
+              <span>{prayer.prayer_count || 0}</span>
             </Button>
             {prayer.status !== "answered" && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setIsSubmittingTestimony(true)}
-                className="text-green-600 border-green-600 hover:bg-green-50"
+                onClick={() => setShowTestimonyForm(true)}
+                className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700"
               >
                 <Check className="h-4 w-4 mr-2" />
                 Mark as Answered
@@ -144,7 +225,7 @@ function PrayerCard({ prayer, onStatusChange }: { prayer: any; onStatusChange?: 
           </Badge>
         </div>
 
-        {isSubmittingTestimony && (
+        {showTestimonyForm && (
           <div className="mt-4 pt-4 border-t">
             <h4 className="font-medium mb-3">Share Your Testimony</h4>
             <div className="space-y-4">
@@ -164,25 +245,27 @@ function PrayerCard({ prayer, onStatusChange }: { prayer: any; onStatusChange?: 
               />
               <div className="flex items-center space-x-2">
                 <Switch
+                  id={`anonymous-${prayer.id}`}
                   checked={testimonyData.isAnonymous}
                   onCheckedChange={(checked) =>
                     setTestimonyData({ ...testimonyData, isAnonymous: checked })
                   }
                 />
-                <span className="text-sm">Share anonymously</span>
+                <Label htmlFor={`anonymous-${prayer.id}`} className="text-sm">Share anonymously</Label>
               </div>
               <div className="flex space-x-2">
                 <Button
                   variant="default"
                   size="sm"
                   onClick={handleMarkAsAnswered}
+                  disabled={markAsAnsweredMutation.isPending}
                 >
-                  Share Testimony
+                  {markAsAnsweredMutation.isPending ? "Sharing..." : "Share Testimony"}
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setIsSubmittingTestimony(false)}
+                  onClick={() => setShowTestimonyForm(false)}
                 >
                   Cancel
                 </Button>
@@ -196,11 +279,13 @@ function PrayerCard({ prayer, onStatusChange }: { prayer: any; onStatusChange?: 
 }
 
 export default function PrayerPage() {
-  const { isSignedIn, isLoaded } = useAuth()
+  const { user, isLoaded } = useUser()
+  const supabase = useSupabase();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("all")
   const { toast } = useToast()
 
-  const form = useForm({
+  const form = useForm<z.infer<typeof prayerSchema>>({
     resolver: zodResolver(prayerSchema),
     defaultValues: {
       title: "",
@@ -211,11 +296,122 @@ export default function PrayerPage() {
     },
   })
 
-  const allPrayers = useQuery(api.prayers.getUserPrayers) || [];
-  const userPrayers = useQuery(api.prayers.getUserPrayers, { status: "pending" }) || [];
-  const createPrayerMutation = useMutation(api.prayers.createPrayer);
+  const { data: prayersData, isLoading: isLoadingPrayers } = useQuery<Prayer[]>({
+    queryKey: ['prayers', user?.id],
+    queryFn: async () => {
+      if (!user || !supabase) {
+        console.log('User or Supabase client not available');
+        return [];
+      }
 
-  if (!isLoaded) {
+      try {
+        console.log('Fetching prayers for user:', user.id);
+        // First check if we have any prayers for this user
+        const { data: existingPrayers, error: checkError } = await supabase
+          .from('prayers')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (checkError) {
+          // If there's an error, it might be because we need to create a mapping first
+          console.log('Initial fetch error:', checkError);
+          
+          // Create user mapping if it doesn't exist
+          const { error: mappingError } = await supabase
+            .from('user_mappings')
+            .upsert({
+              clerk_id: user.id,
+              email: user.emailAddresses[0]?.emailAddress || '',
+              last_seen: new Date().toISOString()
+            }, {
+              onConflict: 'clerk_id'
+            });
+
+          if (mappingError) {
+            console.error('Error creating user mapping:', mappingError);
+            throw mappingError;
+          }
+
+          // Try fetching prayers again after mapping is created
+          const { data: retryData, error: retryError } = await supabase
+            .from('prayers')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+          if (retryError) {
+            console.error('Error fetching prayers after mapping:', retryError);
+            throw retryError;
+          }
+
+          return retryData || [];
+        }
+
+        return existingPrayers || [];
+      } catch (error: any) {
+        console.error('Detailed error:', {
+          error,
+          message: error.message,
+          name: error.name,
+          stack: error.stack
+        });
+        toast({
+          title: 'Error fetching prayers',
+          description: error.message || 'Failed to load prayers. Please try again.',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    enabled: !!user && !!supabase,
+    retry: 1,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  const filteredPrayers = prayersData?.filter(prayer => {
+    if (activeTab === "all") return true;
+    return prayer.status === activeTab;
+  }) || [];
+
+  const submitPrayerMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof prayerSchema>) => {
+      if (!user || !supabase) throw new Error("User or Supabase client not available");
+
+      const { error } = await supabase.from('prayers').insert({
+        user_id: user.id,
+        title: data.title,
+        content: data.content,
+        category: data.category,
+        is_private: data.isPrivate,
+        verse_reference: data.verseReference || null,
+        status: 'pending',
+        prayer_count: 0,
+        tags: [],
+        supporting_verses: data.verseReference ? [data.verseReference] : [],
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prayers'] });
+      form.reset();
+      toast({
+        title: "Prayer request submitted",
+        description: "Your prayer request has been shared with the community.",
+      });
+    },
+    onError: (error: any) => {
+      console.error("Error submitting prayer:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to submit prayer request",
+        variant: "destructive",
+      });
+    },
+  });
+
+  if (!isLoaded || isLoadingPrayers) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
@@ -223,199 +419,168 @@ export default function PrayerPage() {
     )
   }
 
-  if (!isSignedIn) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-center text-lg">Please sign in to access the Prayer Network</p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  const handleSubmit = async (data: any) => {
-    try {
-      await createPrayerMutation.mutate(data);
-      form.reset();
+  const onSubmit = (data: z.infer<typeof prayerSchema>) => {
+    if (!user) {
       toast({
-        title: "Prayer request submitted",
-        description: "Your prayer request has been shared with the community.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to submit prayer request",
+        title: "Please sign in",
+        description: "You need to be signed in to submit prayer requests",
         variant: "destructive",
       });
+      return;
     }
+    submitPrayerMutation.mutate(data);
   };
 
-  const handleStatusChange = () => {}
-
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-4xl font-bold">Prayer Network</h1>
-        <Heart className="h-8 w-8 text-primary" />
-      </div>
+    <div className="min-h-screen flex flex-col">
+      <MainNav />
+      <main className="flex-grow container mx-auto px-4 py-8 mt-16">
+        <h1 className="text-3xl font-bold mb-8 text-center">Prayer Network</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Submit Prayer Request</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(handleSubmit)}
-                className="space-y-4"
-              >
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Title</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="text"
-                          className="w-full p-2 border rounded-md"
-                          placeholder="Brief title for your prayer request"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+        <Tabs defaultValue="submit" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="submit">Submit Prayer</TabsTrigger>
+            <TabsTrigger value="prayers">Prayer Wall</TabsTrigger>
+          </TabsList>
 
-                <FormField
-                  control={form.control}
-                  name="content"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Your Prayer Request</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Share your prayer request..."
-                          className="min-h-[100px]"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <FormControl>
-                        <select
-                          className="w-full p-2 border rounded-md"
-                          {...field}
-                        >
-                          <option value="general">General</option>
-                          <option value="healing">Healing</option>
-                          <option value="provision">Provision</option>
-                          <option value="guidance">Guidance</option>
-                          <option value="relationships">Relationships</option>
-                          <option value="spiritual">Spiritual Growth</option>
-                        </select>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="isPrivate"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Private Prayer</FormLabel>
-                        <FormDescription>
-                          Only share with prayer team
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <Button
-                  type="submit"
-                  className="w-full"
-                >
-                  Submit Prayer Request
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-
-        <div className="lg:col-span-2">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="all">All Prayers</TabsTrigger>
-              <TabsTrigger value="my">My Prayers</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="all">
-              {!allPrayers.length ? (
-                <Card className="p-6">
-                  <p className="text-muted-foreground">
-                    No prayer requests at this time.
-                  </p>
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {allPrayers.map((prayer: any) => (
-                    <PrayerCard
-                      key={prayer._id}
-                      prayer={prayer}
-                      onStatusChange={handleStatusChange}
+          <TabsContent value="submit">
+            <Card>
+              <CardHeader>
+                <CardTitle>Submit Prayer Request</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Prayer Title</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter a title for your prayer request" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="my">
-              {!userPrayers.length ? (
-                <Card className="p-6">
-                  <p className="text-muted-foreground">
-                    You haven't submitted any prayer requests yet.
-                  </p>
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {userPrayers.map((prayer: any) => (
-                    <PrayerCard
-                      key={prayer._id}
-                      prayer={prayer}
-                      onStatusChange={handleStatusChange}
+                    <FormField
+                      control={form.control}
+                      name="content"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Prayer Request</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Share your prayer request..."
+                              className="min-h-[100px]"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
+                    <FormField
+                      control={form.control}
+                      name="category"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Category</FormLabel>
+                          <FormControl>
+                            <select
+                              className="w-full p-2 border rounded-md"
+                              {...field}
+                            >
+                              <option value="general">General</option>
+                              <option value="healing">Healing</option>
+                              <option value="provision">Provision</option>
+                              <option value="guidance">Guidance</option>
+                              <option value="relationships">Relationships</option>
+                              <option value="spiritual-growth">Spiritual Growth</option>
+                            </select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="verseReference"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Supporting Bible Verse (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., John 3:16" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="isPrivate"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-x-2">
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-0.5">
+                            <FormLabel>Private Prayer</FormLabel>
+                            <FormDescription>
+                              Only you will be able to see this prayer request
+                            </FormDescription>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={submitPrayerMutation.isPending}
+                    >
+                      {submitPrayerMutation.isPending ? (
+                        <>Submitting...</>
+                      ) : (
+                        'Submit Prayer Request'
+                      )}
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-      <TestimonySection />
-      <Footer />
+          <TabsContent value="prayers">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-12">
+              <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="all">All Prayers</TabsTrigger>
+                <TabsTrigger value="pending">Pending</TabsTrigger>
+                <TabsTrigger value="answered">Answered</TabsTrigger>
+                </TabsList>
+              <TabsContent value={activeTab}>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-6">
+                  {filteredPrayers.length > 0 ? (
+                    filteredPrayers.map((prayer) => (
+                      <PrayerCard key={prayer.id} prayer={prayer} />
+                    ))
+                  ) : (
+                    <p className="text-center col-span-full text-muted-foreground">
+                      No {activeTab !== 'all' ? activeTab : ''} prayers found.
+                    </p>
+                  )}
+                    </div>
+                </TabsContent>
+              </Tabs>
+          </TabsContent>
+        </Tabs>
+
+        <TestimonySection />
+
+      </main>
     </div>
   )
 }

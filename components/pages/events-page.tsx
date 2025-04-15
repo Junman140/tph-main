@@ -71,7 +71,7 @@ function EventCard({ event }: { event: any }) {
             {event.location}
           </div>
         </div>
-        <RegistrationForm eventTitle={event.title} />
+        <RegistrationForm eventTitle={event.title} eventId={""} />
       </CardContent>
     </Card>
   )
@@ -104,10 +104,9 @@ export default function EventsPage() {
   const events = FEATURED_EVENTS;
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col">
       <MainNav />
-
-      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-16">
+      <main className="flex-grow container mx-auto px-4 py-8 mt-16">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-4xl font-bold">Upcoming Events</h1>
           <Calendar className="h-8 w-8 text-primary" />
@@ -119,8 +118,6 @@ export default function EventsPage() {
           ))}
         </div>
       </main>
-
-      <Footer />
     </div>
   )
 }

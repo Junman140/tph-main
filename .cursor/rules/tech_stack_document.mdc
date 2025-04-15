@@ -1,0 +1,21 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Tech Stack (Enforced)
+Layer	    | Tool / Rule
+Framework   =	Next.js (App Router, TypeScript, strict mode, no pages dir)
+Styling	    = Tailwind CSS, ShadCN UI, utility-first, no inline styles
+Animation   =	Framer Motion used sparingly for transitions only
+Backend	    =  Supabase (Postgres, Edge Functions), optionally Convex
+Auth        = Clerk (default), or fallback to Pi Network Auth
+Payments	= Polar, or Pi Network Tokens, None if not mentioned (default)
+Markdown Docs =	.mdc files via .cursor/rules, .mdx for UI docs
+API Standards =	RESTful API using /api in Next.js, no GraphQL
+DB Access     = Supabase SDK — never raw SQL
+Contracts (MCP)	Pi Smart Contract SDK, modularized in lib/mcp.ts
+File Naming	  = Always kebab-case for folders, camelCase for files
+Path Aliases  = Use @/lib, @/components, @/hooks, etc. in tsconfig.json
+
+default to vercel for deployment if not specified

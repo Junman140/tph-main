@@ -8,14 +8,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MainNav } from "@/components/layout/main-nav"
-import { Footer } from "@/components/layout/footer"
 import { format, formatDistanceToNow } from "date-fns"
 import Image from "next/image"
 import { Carousel } from "@/components/ui/carousel"
 import useEmblaCarousel from 'embla-carousel-react'
 import Autoplay from 'embla-carousel-autoplay'
-import { api } from "@/convex/_generated/api";
-import { useQuery } from "convex/react";
+import { useSupabase } from "@/app/providers/supabase-provider"
+import { useQuery } from "@tanstack/react-query"
 
 const carouselImages = [
   {
@@ -109,16 +108,6 @@ const TESTIMONIALS = [
   },
 ]
 
-interface SpotifyEpisode {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  duration: number;
-  imageUrl: string;
-  audioUrl: string;
-}
-
 const GALLERY_ITEMS = [
   {
     id: 1,
@@ -171,10 +160,64 @@ function CarouselDots({ selectedIndex, length, onClick }: { selectedIndex: numbe
   )
 }
 
-const BlogSection = () => {
-  const posts = useQuery(api.posts.getPublishedPosts);
+interface Post {
+  id: string;
+  title: string;
+  content: string;
+  excerpt?: string;
+  slug: string;
+  users?: {
+    name: string;
+  };
+  created_at: string;
+  published: boolean;
+}
 
-  if (posts === undefined) {
+type PostResponse = {
+  id: string;
+  title: string;
+  content: string;
+  excerpt: string | null;
+  slug: string;
+  created_at: string;
+  published: boolean;
+  users: {
+    name: string;
+  } | null;
+}
+
+const BlogSection = () => {
+  const supabase = useSupabase();
+
+  const { data: posts = [], isLoading: isLoadingPosts } = useQuery<Post[]>({
+    queryKey: ['published_posts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('id, title, content, excerpt, slug, created_at, published, users:users(name)')
+        .eq('published', true)
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (error) {
+        console.error("Error fetching posts:", error);
+        return [];
+      }
+
+      return (data || []).map((post: any): Post => ({
+        id: post.id,
+        title: post.title,
+        content: post.content,
+        excerpt: post.excerpt || undefined,
+        slug: post.slug,
+        created_at: post.created_at,
+        published: post.published,
+        users: post.users || undefined
+      }));
+    },
+  });
+
+  if (isLoadingPosts) {
     return (
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
@@ -192,19 +235,19 @@ const BlogSection = () => {
       <div className="container mx-auto px-4">
         <h2 className="text-3xl font-bold mb-8">Latest Blog Posts</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {posts.map((post: any) => (
-            <Link key={post._id} href={`/blog/${post.slug}`}>
+          {posts.map((post) => (
+            <Link key={post.id} href={`/blog/${post.slug}`}>
               <Card className="h-full hover:shadow-lg transition-shadow duration-200">
                 <CardContent className="p-0">
                   <div className="p-6">
                     <h3 className="text-xl font-semibold mb-2">{post.title}</h3>
                     <p className="text-muted-foreground line-clamp-2">
-                      {post.content.substring(0, 150)}...
+                      {post.excerpt || post.content.substring(0, 150)}...
                     </p>
                     <div className="flex items-center mt-4">
                       <div className="flex items-center">
                         <span className="text-sm text-muted-foreground">
-                          By {post.author}
+                          By {post.users?.name || 'Unknown Author'}
                         </span>
                       </div>
                     </div>
@@ -252,20 +295,6 @@ export default function HomePage() {
       emblaRef(emblaRoot)
     }
   }, [emblaRef])
-
-  // Podcast section data
-  const podcastEpisodes: SpotifyEpisode[] = [
-    {
-      id: "1",
-      title: "Walking in Faith",
-      description: "Join us as we explore what it means to walk by faith in today's world.",
-      date: "2025-04-12",
-      duration: 1800,
-      imageUrl: "/podcast/episode1.jpg",
-      audioUrl: "https://example.com/episode1.mp3"
-    },
-    // Add more episodes as needed
-  ];
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id)
@@ -476,50 +505,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Podcast Section */}
-        <section className="py-24 bg-background">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-4xl font-bold mb-6 text-center">Listen to Our Podcast</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {podcastEpisodes.map((episode, index) => (
-                <Card key={episode.id} className="h-full">
-                  <div className="aspect-video relative">
-                    <Image
-                      src={episode.imageUrl}
-                      alt={episode.title}
-                      fill
-                      className="object-cover rounded-t-lg"
-                    />
-                  </div>
-                  <CardContent className="p-6">
-                    <h3 className="text-xl font-semibold mb-2">{episode.title}</h3>
-                    <p className="text-muted-foreground text-sm mb-4">
-                      {episode.description}
-                    </p>
-                    <div className="space-y-2 text-sm text-muted-foreground">
-                      <p className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        {episode.date}
-                      </p>
-                      <p className="flex items-center">
-                        <Clock className="h-4 w-4 mr-2" />
-                        {formatDistanceToNow(new Date(episode.date), { addSuffix: true })}
-                      </p>
-                    </div>
-                    <Button 
-                      variant="secondary" 
-                      className="bg-white/10 hover:bg-white/20 text-white border-white/20"
-                    >
-                      Listen Now
-                      <Play className="ml-2 h-4 w-4" />
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* CTA Section */}
         <section className="py-24 bg-primary dark:bg-primary/90 text-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -542,7 +527,6 @@ export default function HomePage() {
           </div>
         </section>
       </main>
-      <Footer />
     </div>
   )
 }

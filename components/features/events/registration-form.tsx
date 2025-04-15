@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useMutation, useConvexAuth } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { useUser } from "@clerk/nextjs";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -31,27 +31,39 @@ const formSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
   phoneNumber: z.string().min(10, "Please enter a valid phone number"),
+  eventId: z.string().uuid("Invalid event ID"),
 });
 
-export function RegistrationForm({ eventTitle }: { eventTitle: string }) {
+export function RegistrationForm({ eventId, eventTitle }: { eventId: string; eventTitle: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const { isLoading: isAuthLoading } = useConvexAuth();
+  const { user, isLoaded: isAuthLoaded } = useUser();
+  const supabase = useSupabaseClient();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      fullName: "",
-      email: "",
-      phoneNumber: "",
+      fullName: user?.fullName ?? "",
+      email: user?.primaryEmailAddress?.emailAddress ?? "",
+      phoneNumber: user?.primaryPhoneNumber?.phoneNumber ?? "",
+      eventId: eventId,
     },
   });
 
-  const registerMutation = useMutation(api.events.registerForEvent);
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        fullName: user.fullName ?? "",
+        email: user.primaryEmailAddress?.emailAddress ?? "",
+        phoneNumber: user.primaryPhoneNumber?.phoneNumber ?? "",
+        eventId: eventId,
+      });
+    }
+  }, [user, eventId, form]);
 
-  if (isAuthLoading) {
+  if (!isAuthLoaded) {
     return (
       <Button variant="outline" className="w-full" disabled>
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -60,33 +72,72 @@ export function RegistrationForm({ eventTitle }: { eventTitle: string }) {
     );
   }
 
+  if (!user) {
+    return (
+      <Button variant="outline" className="w-full" onClick={() => window.location.href = '/sign-in'}>
+        Sign In to Register
+      </Button>
+    );
+  }
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!user) {
+      toast({ title: "Authentication Error", description: "Please sign in to register.", variant: "destructive" });
+      return;
+    }
+    if (!supabase) {
+      toast({ title: "Database Error", description: "Could not connect to the database.", variant: "destructive" });
+      return;
+    }
+
     try {
       setIsSubmitting(true);
-      const result = await registerMutation({
-        eventTitle,
-        ...values,
-      });
 
-      if (result.success) {
+      const { data, error } = await supabase
+        .from('event_registrations')
+        .insert({
+          event_id: values.eventId,
+          user_id: user.id,
+          status: 'registered',
+        })
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === '23505') {
+          toast({
+            title: "Already Registered",
+            description: "You are already registered for this event.",
+            variant: "default",
+          });
+          setShowSuccess(true);
+          form.reset();
+          setTimeout(() => {
+            setIsOpen(false);
+            setShowSuccess(false);
+          }, 3000);
+        } else {
+          throw error;
+        }
+      } else if (data) {
         setShowSuccess(true);
         form.reset();
         toast({
           title: "Registration Successful!",
-          description: "You have successfully registered for the event. Check your email for confirmation.",
+          description: "You have successfully registered for the event.",
         });
         setTimeout(() => {
           setIsOpen(false);
           setShowSuccess(false);
         }, 3000);
       } else {
-        throw new Error("Registration failed");
+        throw new Error("Registration data was unexpectedly null");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Registration failed:", error);
       toast({
         title: "Registration Failed",
-        description: "There was an error processing your registration. Please try again.",
+        description: error.message || "There was an error processing your registration. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -126,7 +177,7 @@ export function RegistrationForm({ eventTitle }: { eventTitle: string }) {
                   <FormItem>
                     <FormLabel>Full Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your full name" {...field} />
+                      <Input placeholder="Enter your full name" {...field} disabled={!!user?.fullName} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -139,7 +190,7 @@ export function RegistrationForm({ eventTitle }: { eventTitle: string }) {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="Enter your email" {...field} />
+                      <Input type="email" placeholder="Enter your email" {...field} disabled={!!user?.primaryEmailAddress?.emailAddress} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -152,7 +203,7 @@ export function RegistrationForm({ eventTitle }: { eventTitle: string }) {
                   <FormItem>
                     <FormLabel>Phone Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your phone number" {...field} />
+                      <Input placeholder="Enter your phone number" {...field} disabled={!!user?.primaryPhoneNumber?.phoneNumber} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

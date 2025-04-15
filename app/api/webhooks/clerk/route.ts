@@ -1,9 +1,23 @@
 import { Webhook } from "svix"
 import { headers } from "next/headers"
-import { WebhookEvent } from "@clerk/nextjs/server"
-import { ConvexHttpClient } from "convex/browser"
+import type { WebhookEvent } from "@clerk/clerk-sdk-node"
+import { createClient } from "@supabase/supabase-js"
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
+// Initialize Supabase client (use service role key for admin access)
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceRoleKey) {
+  console.error("Supabase URL or Service Role Key missing in environment variables.");
+  // Potentially throw an error or handle this case appropriately
+}
+
+// Ensure the client is only created if vars exist
+const supabaseAdmin = supabaseUrl && supabaseServiceRoleKey
+  ? createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: { persistSession: false } // No session persistence needed for server-side admin client
+    })
+  : null;
 
 export async function POST(req: Request) {
   console.log("Received webhook from Clerk");
@@ -63,9 +77,17 @@ export async function POST(req: Request) {
     const eventType = evt.type;
     console.log("Event type:", eventType);
 
+    if (!supabaseAdmin) {
+      console.error("Supabase admin client failed to initialize.");
+      return new Response(JSON.stringify({ error: "Server configuration error" }), { status: 500 });
+    }
+
     if (eventType === "user.created" || eventType === "user.updated") {
-      const { id, email_addresses, first_name, last_name, image_url, created_at } = evt.data;
-      const primaryEmail = email_addresses?.[0]?.email_address;
+      const { id, email_addresses, first_name, last_name, image_url, created_at, primary_email_address_id, primary_phone_number_id, phone_numbers, last_sign_in_at } = evt.data;
+
+      const primaryEmail = email_addresses.find((e: { id: string; email_address: string }) => e.id === primary_email_address_id)?.email_address;
+      const primaryPhone = phone_numbers.find((p: { id: string; phone_number: string }) => p.id === primary_phone_number_id)?.phone_number;
+      const isVerified = email_addresses.find((e: { id: string; verification?: { status: string } }) => e.id === primary_email_address_id)?.verification?.status === 'verified';
 
       if (!id) {
         return new Response(
@@ -80,30 +102,50 @@ export async function POST(req: Request) {
         first_name,
         last_name,
         image_url,
-        created_at
+        created_at,
+        primaryPhone,
+        last_sign_in_at,
+        isVerified
       });
 
       try {
-        const userData = {
-          userId: id,
+        // Prepare data for Supabase upsert
+        const upsertData = {
+          token_identifier: id, // Use Clerk user ID as the unique identifier
+          name: first_name && last_name ? `${first_name} ${last_name}` : (primaryEmail?.split('@')[0] || 'User'),
           email: primaryEmail || "",
-          name: first_name && last_name ? `${first_name} ${last_name}` : undefined,
           image: image_url,
-          createdAt: created_at,
-          tokenIdentifier: `https://nearby-adder-51.clerk.accounts.dev|${id}`,
+          first_name: first_name,
+          last_name: last_name,
+          phone_number: primaryPhone,
+          last_login_at: last_sign_in_at ? new Date(last_sign_in_at).toISOString() : null,
+          is_email_verified: isVerified || false,
+          // Keep other fields as default or null if not provided by Clerk
+          // created_at is handled by Supabase default
+          // role, metadata, preferences use Supabase defaults
         };
 
-        console.log("Sending to Convex:", userData);
-        
-        const result = await convex.mutation("users:upsertUser", userData);
-        console.log("Convex response:", result);
-        
-        return new Response(JSON.stringify({ success: true, userId: result }), {
+        console.log("Upserting user to Supabase:", upsertData);
+
+        const { data, error } = await supabaseAdmin
+          .from('users')
+          .upsert(upsertData, { onConflict: 'token_identifier' })
+          .select('id') // Select the Supabase ID
+          .single();
+
+        if (error) {
+           console.error("Supabase upsert error:", error);
+           throw error;
+        }
+
+        console.log("Supabase response (user ID):", data?.id);
+
+        return new Response(JSON.stringify({ success: true, userId: data?.id }), {
           status: 200,
           headers: { "Content-Type": "application/json" },
         });
       } catch (error) {
-        console.error("Error syncing user to Convex:", error);
+        console.error("Error syncing user to Supabase:", error);
         return new Response(
           JSON.stringify({ 
             success: false, 
@@ -113,6 +155,29 @@ export async function POST(req: Request) {
           { status: 500, headers: { "Content-Type": "application/json" } }
         );
       }
+    }
+
+    // Handle user deletion
+    if (eventType === 'user.deleted') {
+       const { id } = evt.data;
+       if (!id) {
+          console.error("Missing user ID for deletion event");
+          return new Response(JSON.stringify({ error: "Missing user ID" }), { status: 400 });
+       }
+
+       console.log("Deleting user from Supabase:", id);
+       const { error } = await supabaseAdmin
+         .from('users')
+         .delete()
+         .eq('token_identifier', id);
+
+       if (error) {
+          console.error("Supabase delete error:", error);
+          // Don't necessarily throw, maybe just log, as the user is already deleted in Clerk
+          return new Response(JSON.stringify({ success: false, error: "Failed to delete user from DB" }), { status: 500 });
+       }
+
+       console.log("User deleted from Supabase successfully.");
     }
 
     return new Response(JSON.stringify({ success: true }), {

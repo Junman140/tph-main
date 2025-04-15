@@ -40,7 +40,7 @@ export function Footer() {
                 <Facebook className="h-5 w-5" />
               </a>
               <a
-                href="https://twitter.com/tphglobal"
+                href="https://x.com/tph_global"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-white/10 p-2 rounded-full hover:bg-primary/80 transition-colors"
@@ -56,7 +56,7 @@ export function Footer() {
                 <Instagram className="h-5 w-5" />
               </a>
               <a
-                href="https://youtube.com/tphglobal"
+                href="https://www.youtube.com/@THEPECULIARHOUSEGLOBAL"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-white/10 p-2 rounded-full hover:bg-primary/80 transition-colors"

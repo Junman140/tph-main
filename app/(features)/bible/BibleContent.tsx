@@ -93,7 +93,11 @@ const TRANSLATIONS = [
   { id: "MSG", name: "The Message" },
 ]
 
-export default function BibleContent() {
+interface BibleContentProps {
+  onVerseChangeAction: (verse: string) => Promise<void>
+}
+
+export function BibleContent({ onVerseChangeAction }: BibleContentProps) {
   const searchParams = useSearchParams()
   const [book, setBook] = useState(searchParams.get("book") || "John")
   const [chapter, setChapter] = useState(searchParams.get("chapter") || "1")
@@ -114,13 +118,28 @@ export default function BibleContent() {
         }
         const verseId = `${selectedBook.abbr}.${chapter}.${verse}`
         const response = await fetch(`/api/bible?verseId=${verseId}&translation=${translation}`)
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        const contentType = response.headers.get("content-type")
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error("Received non-JSON response from server")
+        }
+
         const data = await response.json()
         if (data.error) {
           throw new Error(data.error)
         }
+        if (!data.text) {
+          throw new Error("No verse text found")
+        }
         setVerseText(data.text)
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to fetch verse")
+        console.error("Bible fetch error:", err)
+        setError(err instanceof Error ? err.message : "Failed to fetch verse. Please try again later.")
+        setVerseText("")
       } finally {
         setLoading(false)
       }
@@ -128,6 +147,11 @@ export default function BibleContent() {
 
     fetchVerse()
   }, [book, chapter, verse, translation])
+
+  useEffect(() => {
+    const currentReference = `${book} ${chapter}:${verse}`
+    onVerseChangeAction(currentReference)
+  }, [book, chapter, verse, onVerseChangeAction])
 
   const shareVerse = () => {
     const text = `${verseText} - ${book} ${chapter}:${verse} (${translation})`
@@ -144,77 +168,76 @@ export default function BibleContent() {
     }
   }
 
+  const currentReference = `${book} ${chapter}:${verse}`
+
   return (
-    <div className="container mx-auto px-4 py-8 mt-20">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <Select value={book} onValueChange={setBook}>
-            <SelectTrigger className="w-full md:w-48">
-              <SelectValue placeholder="Select book" />
-            </SelectTrigger>
-            <SelectContent>
-              {BOOKS.map((book) => (
-                <SelectItem key={book.name} value={book.name}>
-                  {book.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <div className="h-full flex flex-col">
+      <div className="flex flex-wrap gap-4 p-4 border-b">
+        <Select value={book} onValueChange={setBook}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select book" />
+          </SelectTrigger>
+          <SelectContent>
+            {BOOKS.map((book) => (
+              <SelectItem key={book.name} value={book.name}>
+                {book.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-          <div className="flex gap-2">
-            <Input
-              type="number"
-              value={chapter}
-              onChange={(e) => setChapter(e.target.value)}
-              placeholder="Chapter"
-              className="w-24"
-            />
-            <Input
-              type="number"
-              value={verse}
-              onChange={(e) => setVerse(e.target.value)}
-              placeholder="Verse"
-              className="w-24"
-            />
-          </div>
-
-          <Select value={translation} onValueChange={setTranslation}>
-            <SelectTrigger className="w-full md:w-48">
-              <SelectValue placeholder="Select translation" />
-            </SelectTrigger>
-            <SelectContent>
-              {TRANSLATIONS.map((t) => (
-                <SelectItem key={t.id} value={t.id}>
-                  {t.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Button onClick={shareVerse} variant="outline">
-            <Share2 className="h-4 w-4 mr-2" />
-            Share
-          </Button>
+        <div className="flex gap-2">
+          <Input
+            type="number"
+            value={chapter}
+            onChange={(e) => setChapter(e.target.value)}
+            placeholder="Chapter"
+            className="w-20"
+          />
+          <Input
+            type="number"
+            value={verse}
+            onChange={(e) => setVerse(e.target.value)}
+            placeholder="Verse"
+            className="w-20"
+          />
         </div>
 
+        <Select value={translation} onValueChange={setTranslation}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select translation" />
+          </SelectTrigger>
+          <SelectContent>
+            {TRANSLATIONS.map((t) => (
+              <SelectItem key={t.id} value={t.id}>
+                {t.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Button onClick={shareVerse} variant="outline" size="icon">
+          <Share2 className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4">
+        {loading && (
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        )}
         {error && (
-          <div className="bg-red-50 text-red-600 p-4 rounded-md mb-4">
+          <div className="bg-destructive/10 text-destructive px-4 py-2 rounded-md">
             {error}
           </div>
         )}
-
-        {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
-          </div>
-        ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-            <div className="text-2xl font-serif leading-relaxed mb-4">
-              {verseText}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              {book} {chapter}:{verse} ({translation})
-            </div>
+        {!loading && !error && verseText && (
+          <div className="prose dark:prose-invert max-w-none">
+            <p className="text-xl leading-relaxed">{verseText}</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              {currentReference} ({translation})
+            </p>
           </div>
         )}
       </div>

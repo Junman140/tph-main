@@ -1,7 +1,6 @@
 "use client"
 
 import { MainNav } from "@/components/layout/main-nav"
-import { Footer } from "@/components/layout/footer"
 import { useQuery } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -98,7 +97,7 @@ export default function SermonsPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <MainNav />
-      <main className="flex-1 container mx-auto px-4 py-8 mt-20">
+      <main className="flex-grow container mx-auto px-4 py-8 mt-16">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-4xl font-bold">Sermons & Podcasts</h1>
@@ -124,7 +123,6 @@ export default function SermonsPage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   )
 }

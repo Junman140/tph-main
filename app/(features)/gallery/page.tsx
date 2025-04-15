@@ -6,7 +6,6 @@ import { useEffect, useState, useCallback } from 'react'
 import styles from './gallery.module.css'
 import Autoplay from 'embla-carousel-autoplay'
 import { MainNav } from "@/components/layout/main-nav"
-import { Footer } from "@/components/layout/footer"
 
 interface GalleryItem {
   id: number
@@ -207,7 +206,6 @@ export default function GalleryPage() {
           <ImageSection title="Community Life" items={communityItems} />
         </div>
       </div>
-      <Footer />
     </div>
   )
 } 

@@ -6,17 +6,64 @@ import { Badge } from "@/components/ui/badge"
 import { format, formatDistanceToNow } from "date-fns"
 import { Heart, MessageCircle, Share2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { api } from "@/convex/_generated/api"
-import { useConvex, useQuery } from "convex/react"
+import { useSupabaseClient } from "@supabase/auth-helpers-react"
+import { useQuery } from "@tanstack/react-query"
+
+// Define types for Supabase data
+interface Testimony {
+  id: string;
+  created_at: string;
+  user_id: string;
+  prayer_id: string;
+  title: string;
+  content: string;
+  prayer_duration_days: number | null;
+  tags: string[];
+  likes: number;
+  is_anonymous: boolean;
+  verse_reference: string | null;
+  media_urls: string[];
+  // Joined data (adjust based on actual query)
+  users: {
+    name: string | null;
+    image: string | null;
+  } | null;
+  prayers: {
+    category: string;
+  } | null;
+}
 
 export function TestimonySection() {
-  const convex = useConvex()
+  const supabase = useSupabaseClient();
 
-  const testimonies = useQuery(api.prayers.getPublicTestimonies, {
-    limit: 10,
-  }) || [];
+  // Fetch testimonies using Tanstack Query
+  const { data: testimonies, isLoading: isLoadingTestimonies } = useQuery<Testimony[]>({ // Specify type
+     queryKey: ['public_testimonies'], // Query key for public testimonies
+     queryFn: async () => {
+       if (!supabase) return [];
+       // Query needs to join users and prayers table for details
+       // Note: Adjust the SELECT statement based on desired fields and RLS policies
+       const { data, error } = await supabase
+         .from('testimonies')
+         .select(`
+           *,
+           users ( name, image ),
+           prayers ( category )
+         `)
+         .eq('is_anonymous', false) // Example: Only show non-anonymous or adjust based on RLS
+         .order('created_at', { ascending: false })
+         .limit(10);
 
-  if (!testimonies.length) {
+       if (error) {
+         console.error("Error fetching testimonies:", error);
+         throw new Error(error.message);
+       }
+       return data || [];
+     },
+     enabled: !!supabase, // Only run query when supabase is available
+  });
+
+  if (isLoadingTestimonies) {
     return (
       <div className="animate-pulse space-y-4">
         {[...Array(3)].map((_, i) => (
@@ -25,6 +72,19 @@ export function TestimonySection() {
           </Card>
         ))}
       </div>
+    )
+  }
+
+  if (!testimonies || testimonies.length === 0) {
+     return (
+       <section className="py-12">
+         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+             <h2 className="text-3xl font-bold mb-4">Testimonies of Answered Prayers</h2>
+             <p className="text-muted-foreground">
+               No public testimonies available yet. Be the first to share!
+             </p>
+         </div>
+       </section>
     )
   }
 
@@ -40,29 +100,29 @@ export function TestimonySection() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {testimonies.map((testimony) => (
-            <Card key={testimony._id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
+            <Card key={testimony.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    {!testimony.isAnonymous && testimony.user && (
+                    {!testimony.is_anonymous && testimony.users && (
                       <>
                         <Avatar>
-                          <AvatarImage src={testimony.user.image} />
-                          <AvatarFallback>{testimony.user.name?.[0]}</AvatarFallback>
+                          <AvatarImage src={testimony.users.image ?? undefined} />
+                          <AvatarFallback>{testimony.users.name?.[0]}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{testimony.user.name}</p>
+                          <p className="font-medium">{testimony.users.name}</p>
                           <p className="text-sm text-muted-foreground">
-                            {formatDistanceToNow(new Date(testimony.createdAt), { addSuffix: true })}
+                            {formatDistanceToNow(new Date(testimony.created_at), { addSuffix: true })}
                           </p>
                         </div>
                       </>
                     )}
-                    {testimony.isAnonymous && (
+                    {testimony.is_anonymous && (
                       <div>
                         <p className="font-medium">Anonymous</p>
                         <p className="text-sm text-muted-foreground">
-                          {formatDistanceToNow(new Date(testimony.createdAt), { addSuffix: true })}
+                          {formatDistanceToNow(new Date(testimony.created_at), { addSuffix: true })}
                         </p>
                       </div>
                     )}
@@ -78,16 +138,16 @@ export function TestimonySection() {
                     <p className="text-sm text-muted-foreground">{testimony.content}</p>
                   </div>
 
-                  {testimony.verseReference && (
+                  {testimony.verse_reference && (
                     <div className="bg-muted p-3 rounded-lg">
-                      <p className="text-sm italic">"{testimony.verseReference}"</p>
+                      <p className="text-sm italic">"{testimony.verse_reference}"</p>
                     </div>
                   )}
 
-                  {testimony.prayer && (
+                  {testimony.prayers && (
                     <div className="text-sm">
                       <span className="text-muted-foreground">Category: </span>
-                      <Badge variant="secondary">{testimony.prayer.category}</Badge>
+                      <Badge variant="secondary">{testimony.prayers.category}</Badge>
                     </div>
                   )}
 
@@ -95,7 +155,7 @@ export function TestimonySection() {
                     <div className="flex items-center space-x-4">
                       <Button variant="ghost" size="sm" className="space-x-2">
                         <Heart className="h-4 w-4" />
-                        <span>{testimony.likes}</span>
+                        <span>{testimony.likes || 0}</span>
                       </Button>
                       <Button variant="ghost" size="sm">
                         <MessageCircle className="h-4 w-4 mr-2" />
@@ -108,9 +168,11 @@ export function TestimonySection() {
                   </div>
                 </div>
 
+                {testimony.prayer_duration_days !== null && (
                 <div className="mt-4 text-sm text-muted-foreground">
-                  <p>Prayer answered after {testimony.prayerDuration} days</p>
+                     <p>Prayer answered after {testimony.prayer_duration_days} days</p>
                 </div>
+                )}
               </CardContent>
             </Card>
           ))}
