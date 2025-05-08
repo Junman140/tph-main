@@ -1,22 +1,36 @@
 "use client"
 
+import { useState } from "react"
 import { MainNav } from "@/components/layout/main-nav"
 import { useQuery } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatDistance } from "date-fns"
-import { Video, Calendar, User, Headphones } from "lucide-react"
+import { Calendar, Headphones } from "lucide-react"
 import Image from "next/image"
+import { Button } from "@/components/ui/button"
+import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
+
+// Type definitions
+interface Sermon {
+  id: string
+  title: string
+  description: string
+  date: string
+  duration: number
+  imageUrl: string
+  audioUrl: string
+}
 
 async function fetchSermons() {
   const response = await fetch('/api/spotify')
   if (!response.ok) {
     throw new Error('Failed to fetch sermons')
   }
-  return response.json()
+  return response.json() as Promise<Sermon[]>
 }
 
-function SermonCard({ sermon }: { sermon: any }) {
+function SermonCard({ sermon }: { sermon: Sermon }) {
   return (
     <Card className="hover:shadow-lg transition-shadow h-full flex flex-col">
       <CardHeader className="flex-1">
@@ -89,10 +103,33 @@ function SermonSkeleton() {
 }
 
 export default function SermonsPage() {
-  const { data: sermons, isLoading, error } = useQuery({
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 9 // Show 9 sermons per page (3x3 grid)
+
+  // Fetch all sermons
+  const { data: allSermons, isLoading, error } = useQuery({
     queryKey: ['sermons'],
     queryFn: fetchSermons
   })
+
+  // Calculate pagination
+  const totalSermons = allSermons?.length || 0
+  const totalPages = Math.ceil(totalSermons / itemsPerPage)
+  
+  // Get current page sermons
+  const currentSermons = allSermons?.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
+  // Handle page changes
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page)
+      // Scroll to top when changing pages
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -110,17 +147,83 @@ export default function SermonsPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {!isLoading && allSermons && allSermons.length === 0 && (
+            <div className="bg-yellow-50 text-yellow-600 p-4 rounded-md mb-8">
+              No sermons found. Check back later for new content.
+            </div>
+          )}
+
+          {!isLoading && allSermons && allSermons.length > 0 && (
+            <div className="mb-6">
+              <p className="text-muted-foreground">
+                Showing {currentSermons?.length || 0} of {totalSermons} sermons
+              </p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {isLoading ? (
-              Array.from({ length: 6 }).map((_, i) => (
+              Array.from({ length: itemsPerPage }).map((_, i) => (
                 <SermonSkeleton key={i} />
               ))
             ) : (
-              sermons?.map((sermon: any) => (
+              currentSermons?.map((sermon) => (
                 <SermonCard key={sermon.id} sermon={sermon} />
               ))
             )}
           </div>
+
+          {/* Pagination controls */}
+          {!isLoading && totalPages > 1 && (
+            <Pagination className="mt-8">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => goToPage(currentPage - 1)}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+                
+                {/* Show page numbers */}
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  // Logic to show current page and surrounding pages
+                  let pageNum: number
+                  if (totalPages <= 5) {
+                    // If 5 or fewer pages, show all
+                    pageNum = i + 1
+                  } else if (currentPage <= 3) {
+                    // If near start, show first 5 pages
+                    pageNum = i + 1
+                  } else if (currentPage >= totalPages - 2) {
+                    // If near end, show last 5 pages
+                    pageNum = totalPages - 4 + i
+                  } else {
+                    // Otherwise show current page and 2 pages on each side
+                    pageNum = currentPage - 2 + i
+                  }
+                  
+                  return (
+                    <PaginationItem key={pageNum}>
+                      <Button 
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="icon"
+                        onClick={() => goToPage(pageNum)}
+                      >
+                        {pageNum}
+                      </Button>
+                    </PaginationItem>
+                  )
+                })}
+                
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => goToPage(currentPage + 1)}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </div>
       </main>
     </div>

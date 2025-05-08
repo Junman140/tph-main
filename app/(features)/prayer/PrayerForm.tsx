@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { useAuthenticatedSupabase } from "@/app/providers/supabase-provider"
 import { useAuth } from "@clerk/nextjs"
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
@@ -33,7 +33,7 @@ export function PrayerForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { userId } = useAuth()
   const { toast } = useToast()
-  const supabase = createClientComponentClient()
+  const { supabase, isSignedIn } = useAuthenticatedSupabase()
 
   const form = useForm<PrayerFormValues>({
     resolver: zodResolver(prayerFormSchema),
@@ -45,7 +45,7 @@ export function PrayerForm() {
   })
 
   const onSubmit = async (data: PrayerFormValues) => {
-    if (!userId) {
+    if (!isSignedIn || !userId) {
       toast({
         variant: "destructive",
         title: "Authentication required",

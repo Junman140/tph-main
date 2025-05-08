@@ -1,11 +1,10 @@
 "use client"
 
-import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
-import { motion } from "framer-motion"
+
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -27,16 +26,15 @@ function ThemeToggle() {
   }
 
   return (
-    <Button
+    <button
       type="button"
-      size="icon"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="rounded-full w-8 h-8"
+      className="rounded-full w-8 h-8 p-0 flex items-center justify-center bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800"
     >
       <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
       <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
       <span className="sr-only">Toggle theme</span>
-    </Button>
+    </button>
   )
 }
 
@@ -65,7 +63,7 @@ export function MainNav() {
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center">
-            <img src="/TPH LOGO 2.png" alt="TPH Logo" className="h-10 w-auto" />
+            <Image src="/TPH LOGO 2.png" alt="TPH Logo" width={40} height={40} className="h-10 w-auto" />
           </Link>
           
           {/* Center navigation items */}
@@ -140,7 +138,7 @@ export function MainNav() {
               />
             </SignedIn>
             <SignedOut>
-              <Button asChild variant="ghost" className="hidden md:inline-flex">
+              <Button asChild className="hidden md:inline-flex bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800">
                 <Link href="/sign-in">Sign In</Link>
               </Button>
               <Button asChild className="hidden md:inline-flex">
@@ -152,9 +150,7 @@ export function MainNav() {
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
                 <Button
-                  variant="ghost"
-                  className="md:hidden"
-                  size="icon"
+                  className="md:hidden bg-transparent p-2"
                 >
                   <Menu className="h-6 w-6" />
                   <span className="sr-only">Open menu</span>
@@ -168,11 +164,10 @@ export function MainNav() {
                   <div className="flex-1 overflow-y-auto py-6 px-4">
                     <div className="flex items-center justify-between mb-8">
                       <Link href="/" className="flex items-center space-x-2" onClick={() => setIsOpen(false)}>
-                        <img src="/TPH LOGO 2.png" alt="TPH Logo" className="h-10 w-auto" />
+                        <Image src="/TPH LOGO 2.png" alt="TPH Logo" width={40} height={40} className="h-10 w-auto" />
                       </Link>
                       <Button
-                        variant="ghost"
-                        size="icon"
+                        className="bg-transparent p-2"
                         onClick={() => setIsOpen(false)}
                       >
                         <X className="h-6 w-6" />
@@ -253,7 +248,7 @@ export function MainNav() {
                     </SignedIn>
                     <SignedOut>
                       <div className="flex flex-col space-y-3">
-                        <Button asChild variant="outline" className="w-full">
+                        <Button asChild className="w-full border border-gray-200 bg-transparent hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-gray-800">
                           <Link href="/sign-in" onClick={() => setIsOpen(false)}>
                             Sign In
                           </Link>

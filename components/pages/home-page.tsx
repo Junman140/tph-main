@@ -5,16 +5,17 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { ArrowRight, Calendar, Users, Video, Heart, ChevronDown, Play, User, MapPin, Clock, Headphones } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MainNav } from "@/components/layout/main-nav"
-import { format, formatDistanceToNow } from "date-fns"
+import { format, formatDistanceToNow, formatDistance } from "date-fns"
 import Image from "next/image"
 import { Carousel } from "@/components/ui/carousel"
 import useEmblaCarousel from 'embla-carousel-react'
 import Autoplay from 'embla-carousel-autoplay'
 import { useSupabase } from "@/app/providers/supabase-provider"
 import { useQuery } from "@tanstack/react-query"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const carouselImages = [
   {
@@ -34,29 +35,7 @@ const carouselImages = [
   },
 ]
 
-const BLOG_POSTS = [
-  {
-    title: "Finding Peace in Chaos",
-    author: "Pastor James Wilson",
-    date: "March 15, 2025",
-    imageUrl: "/gallery/fresh10.jpg",
-    excerpt: "Discover how to maintain inner peace during life's most challenging moments.",
-  },
-  {
-    title: "The Power of Community",
-    author: "Sarah Johnson",
-    date: "March 10, 2025",
-    imageUrl: "/gallery/fresh11.jpg",
-    excerpt: "Why Christian fellowship is essential for spiritual growth and support.",
-  },
-  {
-    title: "Walking in Faith",
-    author: "David Thompson",
-    date: "March 5, 2025",
-    imageUrl: "/gallery/fresh12.jpg",
-    excerpt: "Practical steps to strengthen your faith walk in everyday life.",
-  },
-]
+// Blog posts are loaded from the database
 
 const FEATURED_EVENTS = [
   {
@@ -107,6 +86,155 @@ const TESTIMONIALS = [
     role: "Campus president",
   },
 ]
+
+// Sermon type definition
+interface Sermon {
+  id: string
+  title: string
+  description: string
+  date: string
+  duration: number
+  imageUrl: string
+  audioUrl: string
+}
+
+// Function to fetch sermons from the API
+async function fetchSermons() {
+  const response = await fetch('/api/spotify')
+  if (!response.ok) {
+    throw new Error('Failed to fetch sermons')
+  }
+  return response.json() as Promise<Sermon[]>
+}
+
+// Sermon card component for homepage
+function SermonCard({ sermon }: { sermon: Sermon }) {
+  return (
+    <Card className="hover:shadow-lg transition-shadow h-full flex flex-col">
+      <CardHeader className="flex-1 p-4">
+        <div className="relative h-40 w-full mb-3">
+          {sermon.imageUrl ? (
+            <Image
+              src={sermon.imageUrl}
+              alt={sermon.title}
+              fill
+              className="object-cover rounded-lg"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
+              <Headphones className="h-10 w-10 text-gray-400" />
+            </div>
+          )}
+        </div>
+        <CardTitle className="text-lg mb-2 line-clamp-1">{sermon.title}</CardTitle>
+        <div className="flex items-center text-sm text-muted-foreground space-x-3 mb-2">
+          <div className="flex items-center">
+            <Calendar className="h-3 w-3 mr-1" />
+            {formatDistance(new Date(sermon.date), new Date(), { addSuffix: true })}
+          </div>
+          {sermon.duration && (
+            <div className="flex items-center">
+              <Headphones className="h-3 w-3 mr-1" />
+              {Math.floor(sermon.duration / 60000)} min
+            </div>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="p-4 pt-0">
+        <p className="text-muted-foreground text-sm mb-3 line-clamp-2">{sermon.description}</p>
+        <a
+          href={sermon.audioUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center text-primary hover:underline mt-auto text-sm"
+        >
+          Listen on Spotify
+          <svg
+            className="ml-1 h-3 w-3"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
+          </svg>
+        </a>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Skeleton loader for sermons
+function SermonSkeleton() {
+  return (
+    <Card className="h-full">
+      <CardHeader>
+        <Skeleton className="h-40 w-full mb-3" />
+        <Skeleton className="h-5 w-3/4 mb-2" />
+        <Skeleton className="h-4 w-1/2 mb-2" />
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-4 w-full mb-2" />
+        <Skeleton className="h-4 w-5/6" />
+      </CardContent>
+    </Card>
+  )
+}
+
+// Component to fetch and display sermons on the homepage
+function HomepageSermons() {
+  // Fetch sermons data using React Query
+  const { data: sermons, isLoading, error } = useQuery<Sermon[]>({
+    queryKey: ['sermons'],
+    queryFn: fetchSermons,
+  })
+
+  // Display loading state
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <SermonSkeleton key={index} />
+        ))}
+      </div>
+    )
+  }
+
+  // Display error state
+  if (error || !sermons) {
+    return (
+      <div className="text-center p-8 bg-red-50 rounded-lg text-red-600">
+        <p>Unable to load sermons at this time. Please check back later.</p>
+      </div>
+    )
+  }
+
+  // If no sermons are available
+  if (sermons.length === 0) {
+    return (
+      <div className="text-center p-8 bg-yellow-50 rounded-lg text-yellow-600">
+        <p>No sermons available at this time. Check back soon for new content.</p>
+      </div>
+    )
+  }
+
+  // Display sermons (limit to 4 for homepage)
+  const homepageSermons = sermons.slice(0, 4)
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {homepageSermons.map((sermon, index) => (
+        <motion.div
+          key={sermon.id}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: index * 0.1 }}
+        >
+          <SermonCard sermon={sermon} />
+        </motion.div>
+      ))}
+    </div>
+  )
+}
 
 const GALLERY_ITEMS = [
   {
@@ -187,75 +315,30 @@ type PostResponse = {
 }
 
 const BlogSection = () => {
-  const supabase = useSupabase();
-
-  const { data: posts = [], isLoading: isLoadingPosts } = useQuery<Post[]>({
-    queryKey: ['published_posts'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('id, title, content, excerpt, slug, created_at, published, users:users(name)')
-        .eq('published', true)
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      if (error) {
-        console.error("Error fetching posts:", error);
-        return [];
-      }
-
-      return (data || []).map((post: any): Post => ({
-        id: post.id,
-        title: post.title,
-        content: post.content,
-        excerpt: post.excerpt || undefined,
-        slug: post.slug,
-        created_at: post.created_at,
-        published: post.published,
-        users: post.users || undefined
-      }));
-    },
-  });
-
-  if (isLoadingPosts) {
-    return (
-      <section className="py-16 bg-background">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-8">Latest Blog Posts</h2>
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
-          </div>
-        </div>
-      </section>
-    );
-  }
-
   return (
     <section className="py-16 bg-background">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold mb-8">Latest Blog Posts</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {posts.map((post) => (
-            <Link key={post.id} href={`/blog/${post.slug}`}>
-              <Card className="h-full hover:shadow-lg transition-shadow duration-200">
-                <CardContent className="p-0">
-                  <div className="p-6">
-                    <h3 className="text-xl font-semibold mb-2">{post.title}</h3>
-                    <p className="text-muted-foreground line-clamp-2">
-                      {post.excerpt || post.content.substring(0, 150)}...
-                    </p>
-                    <div className="flex items-center mt-4">
-                      <div className="flex items-center">
-                        <span className="text-sm text-muted-foreground">
-                          By {post.users?.name || 'Unknown Author'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-3xl font-bold">Latest Blog Posts</h2>
+          <Link href="/blog">
+            <Button variant="outline" className="flex items-center gap-2">
+              View All Posts <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+        
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="max-w-md space-y-4">
+            <h3 className="text-xl font-medium">Explore Our Blog</h3>
+            <p className="text-muted-foreground">
+              Visit our blog page to discover inspiring articles, devotionals, and updates from The Peculiar House Global.
+            </p>
+            <Link href="/blog">
+              <Button className="mt-4">
+                Go to Blog
+              </Button>
             </Link>
-          ))}
+          </div>
         </div>
       </div>
     </section>
@@ -312,7 +395,7 @@ export default function HomePage() {
         <section className="relative h-[80vh] min-h-[600px] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 z-0">
             <Image
-              src="/gallery/fresh1.jpg"
+              src="/gallery/BREAKFORTH.jpg"
               alt="TPH Global"
               fill
               className="object-cover brightness-50"
@@ -343,6 +426,33 @@ export default function HomePage() {
               >
                 <Link href="/sermons">Listen to Sermons</Link>
               </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* Sermons and Podcasts Section */}
+        <section className="py-16 bg-muted/30 px-4 sm:px-6 lg:px-8">
+          <div className="container mx-auto">
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4 border-primary/20 text-primary">
+                Latest Content
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Sermons & Podcasts</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Spiritual nourishment for your journey of faith
+              </p>
+            </div>
+            
+            {/* Fetch sermons from Spotify API */}
+            <HomepageSermons />
+            
+            <div className="mt-10 text-center">
+              <Link href="/sermons">
+                <Button variant="outline" className="gap-2">
+                  View All Sermons & Podcasts
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
             </div>
           </div>
         </section>

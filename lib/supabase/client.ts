@@ -50,6 +50,44 @@ export interface Database {
           excerpt?: string
           tags?: string[]
         }
+      },
+      event_registrations: {
+        Row: {
+          id: string
+          created_at: string
+          event_id: string
+          user_id: string | null
+          full_name: string
+          email: string
+          phone_number: string
+          location: string
+          notes: string | null
+          status: string
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          event_id: string
+          user_id?: string | null
+          full_name: string
+          email: string
+          phone_number: string
+          location: string
+          notes?: string | null
+          status?: string
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          event_id?: string
+          user_id?: string | null
+          full_name?: string
+          email?: string
+          phone_number?: string
+          location?: string
+          notes?: string | null
+          status?: string
+        }
       }
     }
     Views: {

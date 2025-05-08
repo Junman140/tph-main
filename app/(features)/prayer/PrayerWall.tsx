@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { useAuthenticatedSupabase } from "@/app/providers/supabase-provider"
 import { useAuth } from "@clerk/nextjs"
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
@@ -39,7 +39,7 @@ export function PrayerWall() {
   const [selectedPrayerId, setSelectedPrayerId] = useState<string | null>(null)
   const { userId } = useAuth()
   const { toast } = useToast()
-  const supabase = createClientComponentClient()
+  const { supabase, isSignedIn } = useAuthenticatedSupabase()
 
   useEffect(() => {
     fetchPrayers()
@@ -100,7 +100,7 @@ export function PrayerWall() {
   }
 
   const toggleSupport = async (prayerId: string) => {
-    if (!userId) {
+    if (!isSignedIn || !userId) {
       toast({
         variant: "destructive",
         title: "Authentication required",
@@ -141,7 +141,14 @@ export function PrayerWall() {
   }
 
   const markAsAnswered = async (prayerId: string) => {
-    if (!userId) return
+    if (!isSignedIn || !userId) {
+      toast({
+        variant: "destructive",
+        title: "Authentication required",
+        description: "Please sign in to mark prayers as answered"
+      })
+      return
+    }
 
     try {
       const { error } = await supabase

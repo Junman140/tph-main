@@ -1,13 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PrayerForm } from "./PrayerForm"
 import { PrayerWall } from "./PrayerWall"
 import { TestimonyWall } from "./TestimonyWall"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useAuthenticatedSupabase } from '@/app/providers/supabase-provider'
 import { useToast } from "@/components/ui/use-toast"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -21,17 +21,27 @@ export default function PrayerPage() {
   const [request, setRequest] = useState('')
   const [isAnonymous, setIsAnonymous] = useState(false)
   const { toast } = useToast()
-  const supabase = createClientComponentClient()
+  const { supabase, isSignedIn } = useAuthenticatedSupabase()
+  const [userId, setUserId] = useState<string | null>(null)
+  
+  // Get the user ID when signed in
+  useEffect(() => {
+    if (isSignedIn) {
+      const getUserId = async () => {
+        const { data } = await supabase.auth.getUser()
+        if (data?.user) {
+          setUserId(data.user.id)
+        }
+      }
+      getUserId()
+    }
+  }, [isSignedIn, supabase.auth])
 
   const handleSubmit = async () => {
     try {
       setIsLoading(true)
       
-      // Get the current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
-      if (userError) throw userError
-
-      if (!user) {
+      if (!isSignedIn) {
         toast({
           title: "Authentication required",
           description: "Please sign in to submit prayer requests",
@@ -50,11 +60,20 @@ export default function PrayerPage() {
         return
       }
 
+      if (!userId) {
+        toast({
+          title: "User ID not found",
+          description: "Please try signing in again",
+          variant: "destructive"
+        })
+        return
+      }
+      
       // Submit the prayer request
       const { error } = await supabase
         .from('prayer_requests')
         .insert({
-          user_id: user.id,
+          user_id: userId,
           title: title.trim(),
           request: request.trim(),
           is_anonymous: isAnonymous

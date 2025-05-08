@@ -1,6 +1,44 @@
 export type Database = {
   public: {
     Tables: {
+      blog_posts: {
+        Row: {
+          id: string
+          title: string
+          slug: string
+          content: string
+          description: string
+          tags: string[]
+          date: string
+          reading_time: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          slug: string
+          content: string
+          description: string
+          tags?: string[]
+          date?: string
+          reading_time: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          slug?: string
+          content?: string
+          description?: string
+          tags?: string[]
+          date?: string
+          reading_time?: number
+          created_at?: string
+          updated_at?: string
+        }
+      },
       posts: {
         Row: {
           id: string
@@ -179,6 +217,29 @@ export type Database = {
           title?: string
           content?: string
           is_anonymous?: boolean
+        }
+      },
+      bible_notes: {
+        Row: {
+          id: string
+          created_at: string
+          user_id: string
+          verse_reference: string
+          content: string
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          user_id: string
+          verse_reference: string
+          content: string
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          user_id?: string
+          verse_reference?: string
+          content?: string
         }
       }
 
