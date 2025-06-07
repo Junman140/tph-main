@@ -1,5 +1,4 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import { format } from 'date-fns'
 import { Button } from '@/components/ui/button'
@@ -20,10 +19,10 @@ interface BlogPost {
 }
 
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
-  const supabase = createServerComponentClient({ cookies })
-  
-  // Get the current session
-  const { data: { session } } = await supabase.auth.getSession();
+  // Initialize Supabase client directly
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
   // Fetch the post
   const { data: post, error } = await supabase
@@ -36,8 +35,8 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
     notFound();
   }
 
-  // Check if user has access to this post
-  if (!post.published && (!session || session.user.id !== post.author_id)) {
+  // Only check if post is published, no auth check
+  if (!post.published) {
     notFound();
   }
 

@@ -1,11 +1,7 @@
 "use client"
 
 import { useState } from "react"
-<<<<<<< HEAD
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-=======
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
->>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
@@ -18,16 +14,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Heart, Check } from "lucide-react"
-<<<<<<< HEAD
 import { TestimonySection } from "./testimony-section"
-import { useSupabaseClient } from "@supabase/auth-helpers-react"
-=======
->>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { format } from 'date-fns'
 import { Badge } from "@/components/ui/badge"
 import { MainNav } from "@/components/layout/main-nav"
-import { useAuthenticatedSupabase } from '@/app/providers/supabase-provider'
+import { useSupabase } from '@/app/providers/supabase-provider'
 
 interface Prayer {
   id: string;
@@ -62,13 +54,9 @@ const prayerSchema = z.object({
 // We'll use the authenticated supabase client from the provider
 
 function PrayerCard({ prayer }: { prayer: Prayer }) {
-<<<<<<< HEAD
-  const supabase = useSupabase();
-=======
   const { toast } = useToast();
->>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
   const queryClient = useQueryClient();
-  const { supabase, isSignedIn } = useAuthenticatedSupabase();
+  const supabase = useSupabase();
 
   const [showTestimonyForm, setShowTestimonyForm] = useState(false)
   const [testimonyData, setTestimonyData] = useState<TestimonyFormData>({
@@ -79,36 +67,7 @@ function PrayerCard({ prayer }: { prayer: Prayer }) {
 
   const markAsAnsweredMutation = useMutation({
     mutationFn: async (data: TestimonyFormData) => {
-<<<<<<< HEAD
       if (!supabase) throw new Error("Supabase client not available");
-
-      // In public site, only get public prayers
-      let query = supabase
-        .from('prayers')
-        .select(`
-          id,
-          created_at,
-          user_id,
-          title,
-          content,
-          category,
-          is_private,
-          status,
-          answered_at,
-          tags,
-          prayer_count,
-          supporting_verses,
-          verse_reference
-        `)
-        .eq('is_private', false)  // Only public prayers
-        .order('created_at', { ascending: false });
-
-=======
-      if (!isSignedIn) {
-        throw new Error('You must be signed in to mark a prayer as answered');
-      }
-      
->>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
       const { error: prayerError } = await supabase
         .from('prayers')
         .update({ status: 'answered', answered_at: new Date().toISOString() })
@@ -337,12 +296,10 @@ function PrayerCard({ prayer }: { prayer: Prayer }) {
 }
 
 export default function PrayerPage() {
-<<<<<<< HEAD
   const supabase = useSupabase();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState("prayers")
   const [activeTab, setActiveTab] = useState("all")
-=======
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("all");
   const { toast } = useToast();
@@ -390,9 +347,6 @@ export default function PrayerPage() {
 
       if (error) {
         console.error('Error fetching prayers:', error);
-=======
-  const { supabase, executeAuthenticatedQuery, isSignedIn } = useAuthenticatedSupabase();
-
   const { data: prayers = [], isLoading: isLoadingPrayers } = useQuery({
     queryKey: ['prayers'],
     enabled: true,
@@ -430,16 +384,12 @@ export default function PrayerPage() {
 
       return data || [];
     },
-<<<<<<< HEAD
     enabled: !!supabase,
-=======
->>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
     retry: 1,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-<<<<<<< HEAD
-  const filteredPrayers = prayersQuery.data?.filter(prayer => {
+  const filteredPrayers = prayers?.filter(prayer => {
     if (activeTab === "all") return true;
     return prayer.status === activeTab;
   }) || [];

@@ -9,75 +9,20 @@ import { format } from "date-fns"
 import Link from "next/link"
 import { Search } from "lucide-react"
 import { MainNav } from "@/components/layout/main-nav"
-<<<<<<< HEAD
-import { useSupabaseClient } from "@supabase/auth-helpers-react"
-import { useQuery } from "@tanstack/react-query"
-
-interface Post {
-  id: string
-  title: string
-  content: string
-  excerpt: string | null
-  slug: string
-  created_at: string
-  published: boolean
-  tags: string[]
-  author: {
-    name: string
-  } | null
-}
-
-export default function BlogPage() {
-  const supabase = useSupabaseClient()
-  const [searchQuery, setSearchQuery] = useState("")
-
-  const { data: posts = [], isLoading } = useQuery<Post[]>({
-    queryKey: ['blog_posts', searchQuery],
-    queryFn: async () => {
-      let query = supabase
-        .from('posts')
-        .select(`
-          id,
-          title,
-          content,
-          excerpt,
-          slug,
-          created_at,
-          published,
-          tags,
-          author:author_id (
-            name
-          )
-        `)
-        .eq('published', true)
-        .order('created_at', { ascending: false })
-
-      if (searchQuery) {
-        query = query.or(`title.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%`)
-      }
-
-      const { data, error } = await query
-
-      if (error) {
-        console.error('Error fetching posts:', error)
-        return []
-      }
-
-      return data || []
-    }
-  })
-=======
 import { useSupabase } from "@/app/providers/supabase-provider"
-import { useState, useEffect } from 'react'
 
 type Post = {
   id: string
   title: string
-  date: string
-  reading_time: number
-  description: string
-  tags: string[]
+  content?: string
+  excerpt?: string
   slug: string
+  created_at?: string
+  date?: string
+  reading_time?: number
+  description?: string
+  published?: boolean
+  tags: string[]
 }
 
 export default function BlogPage() {
@@ -85,14 +30,22 @@ export default function BlogPage() {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const { data, error } = await supabase
-          .from('blog_posts')
-          .select('id, title, slug, description, date, reading_time, tags')
-          .order('date', { ascending: false })
+        let query = supabase
+          .from('posts')
+          .select('id, title, slug, content, excerpt, created_at, tags, published')
+          .eq('published', true)
+          .order('created_at', { ascending: false })
+
+        if (searchQuery) {
+          query = query.or(`title.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%`)
+        }
+
+        const { data, error } = await query
 
         if (error) {
           setFetchError(error.message || 'Unknown error')
@@ -115,37 +68,11 @@ export default function BlogPage() {
     }
 
     fetchPosts()
-  }, [])
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <MainNav />
-        <div className="flex-grow pt-24 pb-16">
-          <div className="container mx-auto px-4 max-w-7xl">
-            <p>Loading posts...</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (fetchError) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <MainNav />
-        <div className="flex-grow pt-24 pb-16">
-          <div className="container mx-auto px-4 max-w-7xl">
-            <p className="text-red-500 font-bold">Error loading posts: {fetchError}</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
->>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
+  }, [searchQuery])
 
   return (
     <div className="min-h-screen flex flex-col">
+      <MainNav />
       <div className="flex-grow pt-24 pb-16">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="flex flex-col space-y-8">
@@ -160,30 +87,22 @@ export default function BlogPage() {
                   placeholder="Search posts..."
                   className="pl-10"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value)
+                    // Trigger re-fetch when search changes
+                    setLoading(true)
+                  }}
                 />
               </div>
             </div>
-
-<<<<<<< HEAD
-            {isLoading ? (
+            {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[1, 2, 3].map((i) => (
                   <Card key={i} className="h-full animate-pulse">
                     <CardHeader>
                       <div className="h-6 bg-muted rounded w-3/4" />
                       <div className="h-4 bg-muted rounded w-1/2 mt-2" />
-=======
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {posts.map((post) => (
-                <Link key={post.id} href={`/blog/${post.slug}`}>
-                  <Card className="h-full hover:shadow-lg transition-shadow">
-                    <CardHeader>
-                      <CardTitle>{post.title}</CardTitle>
-                      <CardDescription>
-                        {format(new Date(post.date), "MMMM d, yyyy")} • {post.reading_time} min read
-                      </CardDescription>
->>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
+
                     </CardHeader>
                     <CardContent>
                       <div className="h-4 bg-muted rounded w-full" />
@@ -206,13 +125,12 @@ export default function BlogPage() {
                       <CardHeader>
                         <CardTitle>{post.title}</CardTitle>
                         <CardDescription>
-                          {format(new Date(post.created_at), "MMMM d, yyyy")}
-                          {post.author && ` • By ${post.author.name}`}
+                          {format(new Date(post.created_at || ''), "MMMM d, yyyy")}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
                         <p className="text-muted-foreground">
-                          {post.excerpt || post.content.substring(0, 150)}...
+                          {post.excerpt || (post.content && post.content.substring(0, 150)) || post.description || ''}...
                         </p>
                         {post.tags && post.tags.length > 0 && (
                           <div className="mt-4 flex flex-wrap gap-2">

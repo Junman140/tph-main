@@ -1,12 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-<<<<<<< HEAD
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-=======
-import { useAuthenticatedSupabase } from "@/app/providers/supabase-provider"
-import { useAuth } from "@clerk/nextjs"
->>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
+import { useSupabase } from "@/app/providers/supabase-provider"
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -37,10 +32,8 @@ export function PrayerWall() {
   const [prayers, setPrayers] = useState<Prayer[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedPrayerId, setSelectedPrayerId] = useState<string | null>(null)
-  // Guest user mode for church website
-  const userId = null
   const { toast } = useToast()
-  const { supabase, isSignedIn } = useAuthenticatedSupabase()
+  const supabase = useSupabase()
 
   useEffect(() => {
     fetchPrayers()
@@ -90,22 +83,6 @@ export function PrayerWall() {
   }
 
   const toggleSupport = async (prayerId: string) => {
-<<<<<<< HEAD
-    // For a public church website, we'll show a different message
-    toast({
-      title: "Thank you for your support",
-      description: "Your prayer support has been counted anonymously"
-    })
-=======
-    if (!isSignedIn || !userId) {
-      toast({
-        variant: "destructive",
-        title: "Authentication required",
-        description: "Please sign in to support prayers"
-      })
-      return
-    }
->>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
 
     try {
       const prayer = prayers.find(p => p.id === prayerId)
@@ -124,29 +101,12 @@ export function PrayerWall() {
   }
 
   const markAsAnswered = async (prayerId: string) => {
-<<<<<<< HEAD
-    // In a public website, this function won't be used
-    // But we'll keep it with simplified functionality
-    toast({
-      title: "Feature unavailable",
-      description: "Contact the church administrator to mark prayers as answered"
-    })
-=======
-    if (!isSignedIn || !userId) {
-      toast({
-        variant: "destructive",
-        title: "Authentication required",
-        description: "Please sign in to mark prayers as answered"
-      })
-      return
-    }
 
     try {
       const { error } = await supabase
         .from('prayers')
         .update({ status: 'answered' })
         .eq('id', prayerId)
-        .eq('user_id', userId)
 
       if (error) throw error
 
@@ -159,7 +119,6 @@ export function PrayerWall() {
         description: "Failed to update prayer status"
       })
     }
->>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
   }
 
   const handleTestimonySuccess = () => {

@@ -1,10 +1,9 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { useUser } from "@clerk/nextjs"
 import { useToast } from "@/components/ui/use-toast"
 import {
   Dialog,
@@ -29,16 +28,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Loader2 } from "lucide-react"
 
 const formSchema = z.object({
-<<<<<<< HEAD
-  name: z.string().min(2, "Name is required"),
-  email: z.string().email("Please enter a valid email"),
-  phone: z.string().optional(),
-=======
   fullName: z.string().min(2, { message: "Full name is required" }),
   email: z.string().email({ message: "Valid email is required" }),
-  phoneNumber: z.string().min(10, { message: "Valid phone number is required" }),
+  phoneNumber: z.string().min(10, { message: "Valid phone number is required" }).optional(),
   location: z.string().min(2, { message: "Location is required" }),
->>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
   notes: z.string().optional(),
 })
 
@@ -52,54 +45,6 @@ interface RegistrationFormProps {
 export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps) {
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-<<<<<<< HEAD
-  const supabase = useSupabaseClient()
-  const { toast } = useToast()
-
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      notes: "",
-    },
-  })
-
-  const onSubmit = async (data: FormData) => {
-    setIsSubmitting(true)
-    try {
-      const { error } = await supabase.from("event_registrations").insert({
-        event_id: eventId,
-        user_id: 'anonymous', // Anonymous user for public site
-        name: data.name,
-        email: data.email,
-        phone: data.phone || null,
-        notes: data.notes,
-        status: 'registered'
-      })
-
-      if (error) throw error
-
-      toast({
-        title: "Registration successful",
-        description: "You have been registered for the event. Check your email for confirmation.",
-      })
-      setOpen(false)
-      form.reset()
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to register for the event",
-        variant: "destructive",
-      })
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-=======
-  const { user } = useUser()
   const { toast } = useToast()
 
   // Initialize form with default values
@@ -114,34 +59,35 @@ export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps)
     },
   })
   
-  // Update form values when user data is available
-  React.useEffect(() => {
-    if (user) {
-      form.setValue('fullName', user.fullName || "");
-      form.setValue('email', user.primaryEmailAddress?.emailAddress || "");
-    }
-  }, [user, form])
+  // No longer need to prefill user data since auth is removed
 
-  // Simple form submission handler
-  const onSubmit = (values: FormData) => {
-    console.log('Form submitted with values:', values);
+  // Form submission handler
+  const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
-    
-    // Show success message
-    toast({
-      title: "Registration successful",
-      description: "You have been registered for the event. We will contact you with further details.",
-    });
-    
-    // Close the form and reset
-    setOpen(false);
-    form.reset();
-    setIsSubmitting(false);
+    try {
+      // Here you would typically send the data to your backend
+      // For now, we'll just log it and show a success message
+      console.log('Form submitted with values:', data);
+      
+      // Show success message
+      toast({
+        title: "Registration successful",
+        description: "You have been registered for the event. We will contact you with further details.",
+      });
+      
+      // Close the form and reset
+      setOpen(false);
+      form.reset();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to register for the event",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
-
-  // No pre-checks needed, form will handle everything
-
->>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -158,17 +104,10 @@ export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps)
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-<<<<<<< HEAD
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Your Name</FormLabel>
-=======
               name="fullName"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
->>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -191,17 +130,10 @@ export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps)
             />
             <FormField
               control={form.control}
-<<<<<<< HEAD
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone (Optional)</FormLabel>
-=======
               name="phoneNumber"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Phone Number</FormLabel>
->>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
                   <FormControl>
                     <Input type="tel" {...field} />
                   </FormControl>
@@ -211,8 +143,6 @@ export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps)
             />
             <FormField
               control={form.control}
-<<<<<<< HEAD
-=======
               name="location"
               render={({ field }) => (
                 <FormItem>
@@ -226,7 +156,6 @@ export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps)
             />
             <FormField
               control={form.control}
->>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
               name="notes"
               render={({ field }) => (
                 <FormItem>
