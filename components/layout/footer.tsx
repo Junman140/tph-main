@@ -27,8 +27,7 @@ export function Footer() {
               className="h-10 w-auto mb-4"
             />
             <p className="text-white/70 text-sm">
-              TPH Global is dedicated to raising Kingdom generals through principles of loyalty, holiness, and Anakazo
-              empowerment.
+              TPH Global is dedicated to raising Kingdom generals through principles of loyalty, holiness, and Anakazo.
             </p>
             <div className="flex space-x-4 pt-4">
               <a
@@ -101,7 +100,7 @@ export function Footer() {
               </a>
               <a href="tel:+23490164920471" className="flex items-start text-white/70 hover:text-white transition-colors">
                 <Phone className="h-5 w-5 mr-3 mt-0.5" />
-                <span>+234 (901) 649-20471</span>
+                <span>+234 (91) 649-20471</span>
               </a>
               <div className="flex items-start text-white/70">
                 <MapPin className="h-5 w-5 mr-3 mt-0.5" />

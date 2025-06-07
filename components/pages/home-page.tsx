@@ -10,53 +10,10 @@ import { Badge } from "@/components/ui/badge"
 import { MainNav } from "@/components/layout/main-nav"
 import { format, formatDistanceToNow } from "date-fns"
 import Image from "next/image"
-import { Carousel } from "@/components/ui/carousel"
-import useEmblaCarousel from 'embla-carousel-react'
-import Autoplay from 'embla-carousel-autoplay'
-import { useSupabase } from "@/app/providers/supabase-provider"
+import { useSupabaseClient } from "@supabase/auth-helpers-react"
 import { useQuery } from "@tanstack/react-query"
-
-const carouselImages = [
-  {
-    src: "/gallery/fresh1.jpg",
-    alt: "Sunday Worship Service",
-    description: "Experience the power of worship together",
-  },
-  {
-    src: "/gallery/fresh2.jpg",
-    alt: "Community Fellowship",
-    description: "Growing together in faith and love",
-  },
-  {
-    src: "/gallery/fresh3.jpg",
-    alt: "Youth Ministry",
-    description: "Empowering the next generation",
-  },
-]
-
-const BLOG_POSTS = [
-  {
-    title: "Finding Peace in Chaos",
-    author: "Pastor James Wilson",
-    date: "March 15, 2025",
-    imageUrl: "/gallery/fresh10.jpg",
-    excerpt: "Discover how to maintain inner peace during life's most challenging moments.",
-  },
-  {
-    title: "The Power of Community",
-    author: "Sarah Johnson",
-    date: "March 10, 2025",
-    imageUrl: "/gallery/fresh11.jpg",
-    excerpt: "Why Christian fellowship is essential for spiritual growth and support.",
-  },
-  {
-    title: "Walking in Faith",
-    author: "David Thompson",
-    date: "March 5, 2025",
-    imageUrl: "/gallery/fresh12.jpg",
-    excerpt: "Practical steps to strengthen your faith walk in everyday life.",
-  },
-]
+import Autoplay from "embla-carousel-autoplay"
+import useEmblaCarousel from "embla-carousel-react"
 
 const FEATURED_EVENTS = [
   {
@@ -103,9 +60,39 @@ const TESTIMONIALS = [
   {
     quote:
       "The community at TPH Global has become my spiritual family, supporting me through every step of my faith journey.",
-    name: "Pst Peace Ekarika",
-    role: "Campus president",
+    name: "Pst Caleb George",
+    role: "Theater Minister",
   },
+]
+
+const PODCASTS = [
+  {
+    id: 1,
+    title: "Walking in Faith",
+    host: "Pastor David",
+    duration: "45 min",
+    date: "June 1, 2025",
+    imageUrl: "/podcasts/podcast1.jpg",
+    description: "Exploring how faith shapes our daily walk with God"
+  },
+  {
+    id: 2,
+    title: "Kingdom Principles",
+    host: "Pastor Sarah",
+    duration: "38 min",
+    date: "May 25, 2025",
+    imageUrl: "/podcasts/podcast2.jpg",
+    description: "Understanding the principles that govern God's kingdom"
+  },
+  {
+    id: 3,
+    title: "Spiritual Growth",
+    host: "Pastor Michael",
+    duration: "42 min",
+    date: "May 18, 2025",
+    imageUrl: "/podcasts/podcast3.jpg",
+    description: "Practical steps to grow in your spiritual journey"
+  }
 ]
 
 const GALLERY_ITEMS = [
@@ -187,7 +174,7 @@ type PostResponse = {
 }
 
 const BlogSection = () => {
-  const supabase = useSupabase();
+  const supabase = useSupabaseClient();
 
   const { data: posts = [], isLoading: isLoadingPosts } = useQuery<Post[]>({
     queryKey: ['published_posts'],
@@ -312,7 +299,7 @@ export default function HomePage() {
         <section className="relative h-[80vh] min-h-[600px] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 z-0">
             <Image
-              src="/gallery/fresh1.jpg"
+              src="/events/welcom.jpg"
               alt="TPH Global"
               fill
               className="object-cover brightness-50"
@@ -343,6 +330,69 @@ export default function HomePage() {
               >
                 <Link href="/sermons">Listen to Sermons</Link>
               </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* Podcast Section */}
+        <section className="py-16 bg-muted/30 dark:bg-muted/10">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4 border-primary/20 text-primary">
+                Listen & Grow
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Latest Podcasts</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Spiritual insights and teachings to inspire your faith journey, available anytime, anywhere.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {PODCASTS.map((podcast) => (
+                <motion.div
+                  key={podcast.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: podcast.id * 0.1 }}
+                >
+                  <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                    <div className="aspect-[4/3] relative bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Button variant="secondary" size="icon" className="rounded-full bg-primary text-white hover:bg-primary/90 h-16 w-16">
+                          <Play className="h-8 w-8" />
+                        </Button>
+                      </div>
+                      <Headphones className="h-20 w-20 text-primary/20" />
+                    </div>
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-start mb-3">
+                        <h3 className="text-xl font-semibold">{podcast.title}</h3>
+                        <Badge variant="outline" className="text-xs">{podcast.duration}</Badge>
+                      </div>
+                      <p className="text-muted-foreground text-sm mb-4">{podcast.description}</p>
+                      <div className="flex justify-between items-center text-sm text-muted-foreground">
+                        <span className="flex items-center">
+                          <User className="h-4 w-4 mr-1" />
+                          {podcast.host}
+                        </span>
+                        <span className="flex items-center">
+                          <Calendar className="h-4 w-4 mr-1" />
+                          {podcast.date}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+            
+            <div className="text-center mt-10">
+              <Link href="/podcasts">
+                <Button variant="outline" className="gap-2">
+                  View All Episodes
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
             </div>
           </div>
         </section>

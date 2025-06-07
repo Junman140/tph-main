@@ -1,8 +1,7 @@
 'use client';
 
 import { createClient } from '@supabase/supabase-js';
-import { createContext, useContext, useEffect, useState } from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { createContext, useContext, useState } from 'react';
 import type { Database } from '@/types/supabase';
 
 // Ensure environment variables exist
@@ -15,11 +14,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 // Create a Supabase client constructor with our custom types
 const createSupabaseClient = () => {
-  return createClient<Database>(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: false,
-    },
-  });
+  return createClient<Database>(supabaseUrl, supabaseAnonKey);
 };
 
 // Create context with our client type
@@ -30,26 +25,7 @@ export function SupabaseProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const { getToken } = useAuth();
   const [supabase] = useState(() => createSupabaseClient());
-
-  useEffect(() => {
-    const updateSupabaseAuth = async () => {
-      try {
-        const token = await getToken({ template: 'supabase' });
-        if (token) {
-          supabase.auth.setSession({
-            access_token: token,
-            refresh_token: '',
-          });
-        }
-      } catch (error) {
-        console.error('Error setting Supabase auth:', error);
-      }
-    };
-
-    updateSupabaseAuth();
-  }, [getToken, supabase]);
 
   return (
     <SupabaseContext.Provider value={supabase}>

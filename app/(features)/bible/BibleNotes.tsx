@@ -4,35 +4,37 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useToast } from "@/components/ui/use-toast"
-import { useAuth } from "@clerk/nextjs"
 
 interface Note {
   id: string
   verse_reference: string
   content: string
   created_at: string
+  name: string
 }
 
 export function BibleNotes({ verseReference }: { verseReference: string }) {
   const [notes, setNotes] = useState<Note[]>([])
   const [newNote, setNewNote] = useState("")
+  const [noteName, setNoteName] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const supabase = createClientComponentClient()
   const { toast } = useToast()
-  const { userId } = useAuth()
 
   useEffect(() => {
-    if (!userId || !verseReference) return
+    if (!verseReference) return
 
     const fetchNotes = async () => {
       const { data, error } = await supabase
         .from('bible_notes')
         .select('*')
-        .eq('user_id', userId)
         .eq('verse_reference', verseReference)
+        .eq('is_public', true) // Only get public notes
         .order('created_at', { ascending: false })
 
       if (error) {
@@ -48,19 +50,17 @@ export function BibleNotes({ verseReference }: { verseReference: string }) {
     }
 
     fetchNotes()
-  }, [verseReference, userId, supabase, toast])
+  }, [verseReference, supabase, toast])
 
   const saveNote = async () => {
-    if (!userId) {
+    if (!newNote.trim() || !noteName.trim()) {
       toast({
         variant: "destructive",
-        title: "Authentication required",
-        description: "Please sign in to save notes"
+        title: "Required fields missing",
+        description: "Please provide your name and note content"
       })
       return
     }
-
-    if (!newNote.trim()) return
 
     setIsLoading(true)
     try {
@@ -68,9 +68,11 @@ export function BibleNotes({ verseReference }: { verseReference: string }) {
         .from('bible_notes')
         .insert([
           {
-            user_id: userId,
+            user_id: 'anonymous', // Anonymous user for public site
             verse_reference: verseReference,
             content: newNote.trim(),
+            name: noteName.trim(),
+            is_public: true // All notes are public in public site
           }
         ])
         .select()
@@ -80,6 +82,7 @@ export function BibleNotes({ verseReference }: { verseReference: string }) {
 
       setNotes([data, ...notes])
       setNewNote("")
+      setNoteName("")
       toast({
         title: "Note saved",
         description: "Your note has been saved successfully"
@@ -106,30 +109,48 @@ export function BibleNotes({ verseReference }: { verseReference: string }) {
           <div className="space-y-4">
             {notes.map((note) => (
               <Card key={note.id} className="p-3">
-                <p className="text-sm text-muted-foreground mb-2">
-                  {new Date(note.created_at).toLocaleDateString()}
-                </p>
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-sm font-medium">{note.name || 'Anonymous'}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(note.created_at).toLocaleDateString()}
+                  </p>
+                </div>
                 <p className="text-sm whitespace-pre-wrap">{note.content}</p>
               </Card>
             ))}
           </div>
         </ScrollArea>
         <div className="space-y-2">
-          <Textarea
-            placeholder="Add a note..."
-            value={newNote}
-            onChange={(e) => setNewNote(e.target.value)}
-            className="min-h-[100px] resize-none"
-          />
-          <Button 
-            onClick={saveNote} 
-            className="w-full"
-            disabled={isLoading || !newNote.trim()}
-          >
-            {isLoading ? "Saving..." : "Save Note"}
-          </Button>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label htmlFor="name">Your Name</Label>
+              <Input
+                id="name"
+                placeholder="Enter your name"
+                value={noteName}
+                onChange={(e) => setNoteName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="note">Your Note</Label>
+              <Textarea
+                id="note"
+                placeholder="Add a note..."
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                className="min-h-[100px] resize-none"
+              />
+            </div>
+            <Button 
+              onClick={saveNote} 
+              className="w-full"
+              disabled={isLoading || !newNote.trim() || !noteName.trim()}
+            >
+              {isLoading ? "Saving..." : "Share Note"}
+            </Button>
+          </div>
         </div>
       </div>
     </Card>
   )
-} 
+}

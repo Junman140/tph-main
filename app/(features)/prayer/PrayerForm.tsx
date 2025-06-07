@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { useAuth } from "@clerk/nextjs"
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import {
@@ -31,7 +30,6 @@ type PrayerFormValues = z.infer<typeof prayerFormSchema>
 
 export function PrayerForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { userId } = useAuth()
   const { toast } = useToast()
   const supabase = createClientComponentClient()
 
@@ -45,25 +43,16 @@ export function PrayerForm() {
   })
 
   const onSubmit = async (data: PrayerFormValues) => {
-    if (!userId) {
-      toast({
-        variant: "destructive",
-        title: "Authentication required",
-        description: "Please sign in to submit a prayer request"
-      })
-      return
-    }
-
     setIsSubmitting(true)
     try {
       const { error } = await supabase
         .from('prayers')
         .insert([
           {
-            user_id: userId,
+            user_id: 'anonymous', // Anonymous user ID for public site
             title: data.title,
             content: data.content,
-            is_anonymous: data.is_anonymous,
+            is_anonymous: true, // Always anonymous in public site
             status: 'pending'
           }
         ])

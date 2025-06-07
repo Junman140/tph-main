@@ -130,3 +130,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Support
 
 If you find this template helpful, please give it a ⭐️ on GitHub!
+
+
+
+supabase setup
+admin dashboard: edit blogs, add pictures, add testimonies, add prayers, add events

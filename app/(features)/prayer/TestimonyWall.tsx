@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { useAuth } from "@clerk/nextjs"
 import { useToast } from "@/components/ui/use-toast"
 import { Card } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -23,7 +22,6 @@ interface Testimony {
 export function TestimonyWall() {
   const [testimonies, setTestimonies] = useState<Testimony[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const { userId } = useAuth()
   const { toast } = useToast()
   const supabase = createClientComponentClient()
 

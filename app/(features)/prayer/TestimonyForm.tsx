@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { useAuth } from "@clerk/nextjs"
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import {
@@ -33,7 +32,7 @@ interface TestimonyFormProps {
 
 export function TestimonyForm({ prayerId, onSuccess }: TestimonyFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { userId } = useAuth()
+  // Using anonymous submissions for public church website
   const { toast } = useToast()
   const supabase = createClientComponentClient()
 
@@ -46,22 +45,13 @@ export function TestimonyForm({ prayerId, onSuccess }: TestimonyFormProps) {
   })
 
   const onSubmit = async (data: TestimonyFormValues) => {
-    if (!userId) {
-      toast({
-        variant: "destructive",
-        title: "Authentication required",
-        description: "Please sign in to share your testimony"
-      })
-      return
-    }
-
     setIsSubmitting(true)
     try {
       const { error } = await supabase
         .from('testimonies')
         .insert([
           {
-            user_id: userId,
+            user_id: 'anonymous',  // Using anonymous user ID for public site
             prayer_id: prayerId,
             title: data.title,
             content: data.content,

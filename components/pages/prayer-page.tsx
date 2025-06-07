@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useUser } from "@clerk/nextjs"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -9,14 +8,14 @@ import { Input } from "@/components/ui/input"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { useToast } from "@/components/ui/use-toast"
+import { toast, useToast } from "@/components/ui/use-toast"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Heart, Check } from "lucide-react"
 import { TestimonySection } from "./testimony-section"
-import { useSupabase } from "@/app/providers/supabase-provider"
+import { useSupabaseClient } from "@supabase/auth-helpers-react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { format } from 'date-fns'
 import { Badge } from "@/components/ui/badge"
@@ -53,8 +52,6 @@ const prayerSchema = z.object({
 })
 
 function PrayerCard({ prayer }: { prayer: Prayer }) {
-  const { toast } = useToast()
-  const { user } = useUser();
   const supabase = useSupabase();
   const queryClient = useQueryClient();
 
@@ -67,7 +64,28 @@ function PrayerCard({ prayer }: { prayer: Prayer }) {
 
   const markAsAnsweredMutation = useMutation({
     mutationFn: async (data: TestimonyFormData) => {
-      if (!user || !supabase) throw new Error("User or Supabase client not available");
+      if (!supabase) throw new Error("Supabase client not available");
+
+      // In public site, only get public prayers
+      let query = supabase
+        .from('prayers')
+        .select(`
+          id,
+          created_at,
+          user_id,
+          title,
+          content,
+          category,
+          is_private,
+          status,
+          answered_at,
+          tags,
+          prayer_count,
+          supporting_verses,
+          verse_reference
+        `)
+        .eq('is_private', false)  // Only public prayers
+        .order('created_at', { ascending: false });
 
       const { error: prayerError } = await supabase
         .from('prayers')
@@ -79,17 +97,17 @@ function PrayerCard({ prayer }: { prayer: Prayer }) {
       const { error: testimonyError } = await supabase
         .from('testimonies')
         .insert({
-          user_id: user.id,
+          user_id: 'anonymous', // Anonymous user ID for public site
           prayer_id: prayer.id,
           title: data.title,
           content: data.content,
-          is_anonymous: data.isAnonymous,
+          is_anonymous: true, // Always anonymous in public site
         });
 
       if (testimonyError) throw testimonyError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['prayers', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['prayers'] });
       setShowTestimonyForm(false);
       setTestimonyData({ title: "", content: "", isAnonymous: false });
       toast({
@@ -109,41 +127,35 @@ function PrayerCard({ prayer }: { prayer: Prayer }) {
 
   const supportPrayerMutation = useMutation({
     mutationFn: async () => {
-      if (!user || !supabase) throw new Error("User or Supabase client not available");
+      if (!supabase) throw new Error("Supabase client not available");
 
-      const { data: existingSupport, error: checkError } = await supabase
+      // In a public site without authentication, support is tracked anonymously
+      // For simplicity, we'll just increment the prayer_count directly
+      
+      // Create a new anonymous support record
+      const { error } = await supabase
         .from('prayer_support')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('prayer_id', prayer.id)
-        .maybeSingle();
+        .insert({
+          user_id: 'anonymous',
+          prayer_id: prayer.id,
+          created_at: new Date().toISOString()
+        });
+        
+      if (error) throw error;
 
-      if (checkError) throw checkError;
-      if (existingSupport) {
-        toast({ title: "Already Supported", description: "You are already supporting this prayer.", variant: "default" });
-        return;
-      }
-
-      const { error: supportError } = await supabase
-        .from('prayer_support')
-        .insert({ user_id: user.id, prayer_id: prayer.id, commitment: 'once' });
-
-      if (supportError) throw supportError;
-
-      const { error: rpcError } = await supabase.rpc('increment_prayer_count', {
-        prayer_id_param: prayer.id
-      });
-
-      if (rpcError) {
-        console.error("Failed to increment prayer count:", rpcError);
-        throw new Error("Failed to update prayer count.");
-      }
+      // Update prayer count in prayers table
+      const { error: updateError } = await supabase
+        .from('prayers')
+        .update({ prayer_count: prayer.prayer_count + 1 })
+        .eq('id', prayer.id);
+        
+      if (updateError) throw updateError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['prayers', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['prayers'] });
       toast({
-        title: "Prayer supported",
-        description: "Thank you for supporting this prayer request.",
+        title: "Prayer Supported",
+        description: "Thank you for supporting this prayer."
       })
     },
     onError: (error: any) => {
@@ -279,11 +291,10 @@ function PrayerCard({ prayer }: { prayer: Prayer }) {
 }
 
 export default function PrayerPage() {
-  const { user, isLoaded } = useUser()
   const supabase = useSupabase();
   const queryClient = useQueryClient();
+  const [tab, setTab] = useState("prayers")
   const [activeTab, setActiveTab] = useState("all")
-  const { toast } = useToast()
 
   const form = useForm<z.infer<typeof prayerSchema>>({
     resolver: zodResolver(prayerSchema),
@@ -296,106 +307,77 @@ export default function PrayerPage() {
     },
   })
 
-  const { data: prayersData, isLoading: isLoadingPrayers } = useQuery<Prayer[]>({
-    queryKey: ['prayers', user?.id],
+  const prayersQuery = useQuery({
+    queryKey: ['prayers'],
     queryFn: async () => {
-      if (!user || !supabase) {
-        console.log('User or Supabase client not available');
+      if (!supabase) {
+        console.log('Supabase client not available');
         return [];
       }
 
-      try {
-        console.log('Fetching prayers for user:', user.id);
-        // First check if we have any prayers for this user
-        const { data: existingPrayers, error: checkError } = await supabase
-          .from('prayers')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('prayers')
+        .select(`
+          id,
+          created_at,
+          user_id,
+          title,
+          content,
+          category,
+          is_private,
+          status,
+          answered_at,
+          tags,
+          prayer_count,
+          supporting_verses,
+          verse_reference
+        `)
+        .eq('is_private', false)  // Only public prayers
+        .order('created_at', { ascending: false });
 
-        if (checkError) {
-          // If there's an error, it might be because we need to create a mapping first
-          console.log('Initial fetch error:', checkError);
-          
-          // Create user mapping if it doesn't exist
-          const { error: mappingError } = await supabase
-            .from('user_mappings')
-            .upsert({
-              clerk_id: user.id,
-              email: user.emailAddresses[0]?.emailAddress || '',
-              last_seen: new Date().toISOString()
-            }, {
-              onConflict: 'clerk_id'
-            });
-
-          if (mappingError) {
-            console.error('Error creating user mapping:', mappingError);
-            throw mappingError;
-          }
-
-          // Try fetching prayers again after mapping is created
-          const { data: retryData, error: retryError } = await supabase
-            .from('prayers')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
-
-          if (retryError) {
-            console.error('Error fetching prayers after mapping:', retryError);
-            throw retryError;
-          }
-
-          return retryData || [];
-        }
-
-        return existingPrayers || [];
-      } catch (error: any) {
-        console.error('Detailed error:', {
-          error,
-          message: error.message,
-          name: error.name,
-          stack: error.stack
-        });
-        toast({
-          title: 'Error fetching prayers',
-          description: error.message || 'Failed to load prayers. Please try again.',
-          variant: 'destructive',
-        });
+      if (error) {
+        console.error('Error fetching prayers:', error);
         throw error;
       }
+
+      return data || [];
     },
-    enabled: !!user && !!supabase,
+    enabled: !!supabase,
     retry: 1,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  const filteredPrayers = prayersData?.filter(prayer => {
+  const filteredPrayers = prayersQuery.data?.filter(prayer => {
     if (activeTab === "all") return true;
     return prayer.status === activeTab;
   }) || [];
 
   const submitPrayerMutation = useMutation({
     mutationFn: async (data: z.infer<typeof prayerSchema>) => {
-      if (!user || !supabase) throw new Error("User or Supabase client not available");
+      if (!supabase) {
+        throw new Error("Supabase client not available");
+      }
 
-      const { error } = await supabase.from('prayers').insert({
-        user_id: user.id,
-        title: data.title,
-        content: data.content,
-        category: data.category,
-        is_private: data.isPrivate,
-        verse_reference: data.verseReference || null,
-        status: 'pending',
-        prayer_count: 0,
-        tags: [],
-        supporting_verses: data.verseReference ? [data.verseReference] : [],
-      });
+      const { error } = await supabase
+        .from('prayers')
+        .insert([
+          {
+            user_id: 'anonymous', // Anonymous user for public site
+            title: data.title,
+            content: data.content,
+            category: data.category,
+            is_private: false, // All prayers are public in public site
+            verse_reference: data.verseReference,
+            status: 'pending'
+          }
+        ]);
 
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['prayers'] });
       form.reset();
+      setTab('prayers');
       toast({
         title: "Prayer request submitted",
         description: "Your prayer request has been shared with the community.",
@@ -517,26 +499,7 @@ export default function PrayerPage() {
                         </FormItem>
                       )}
                     />
-                    <FormField
-                      control={form.control}
-                      name="isPrivate"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center space-x-2">
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <div className="space-y-0.5">
-                            <FormLabel>Private Prayer</FormLabel>
-                            <FormDescription>
-                              Only you will be able to see this prayer request
-                            </FormDescription>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
+                    {/* Private prayer option removed in public site */}
                     <Button
                       type="submit"
                       className="w-full"

@@ -4,7 +4,6 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { useUser } from "@clerk/nextjs"
 import { useSupabaseClient } from "@supabase/auth-helpers-react"
 import { useToast } from "@/components/ui/use-toast"
 import {
@@ -31,6 +30,9 @@ import { useQuery } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
 
 const formSchema = z.object({
+  name: z.string().min(2, "Name is required"),
+  email: z.string().email("Please enter a valid email"),
+  phone: z.string().optional(),
   notes: z.string().optional(),
 })
 
@@ -44,48 +46,28 @@ interface RegistrationFormProps {
 export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps) {
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { user } = useUser()
   const supabase = useSupabaseClient()
   const { toast } = useToast()
-
-  // Check if user is already registered
-  const { data: existingRegistration, isLoading } = useQuery({
-    queryKey: ['registration', eventId, user?.id],
-    queryFn: async () => {
-      if (!user) return null
-      const { data } = await supabase
-        .from('event_registrations')
-        .select('*')
-        .eq('event_id', eventId)
-        .eq('user_id', user.id)
-        .single()
-      return data
-    },
-    enabled: !!user,
-  })
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
       notes: "",
     },
   })
 
   const onSubmit = async (data: FormData) => {
-    if (!user) {
-      toast({
-        title: "Please sign in",
-        description: "You need to be signed in to register for events",
-        variant: "destructive",
-      })
-      return
-    }
-
     setIsSubmitting(true)
     try {
       const { error } = await supabase.from("event_registrations").insert({
         event_id: eventId,
-        user_id: user.id,
+        user_id: 'anonymous', // Anonymous user for public site
+        name: data.name,
+        email: data.email,
+        phone: data.phone || null,
         notes: data.notes,
         status: 'registered'
       })
@@ -99,34 +81,14 @@ export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps)
       setOpen(false)
       form.reset()
     } catch (error: any) {
-      if (error.code === '23505') {
-        toast({
-          title: "Already registered",
-          description: "You have already registered for this event",
-          variant: "default",
-        })
-      } else {
-        toast({
-          title: "Error",
-          description: error.message || "Failed to register for the event",
-          variant: "destructive",
-        })
-      }
+      toast({
+        title: "Error",
+        description: error.message || "Failed to register for the event",
+        variant: "destructive",
+      })
     } finally {
       setIsSubmitting(false)
     }
-  }
-
-  if (isLoading) {
-    return <Button disabled><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Checking registration...</Button>
-  }
-
-  if (existingRegistration) {
-    return (
-      <Button variant="secondary" disabled>
-        Already Registered
-      </Button>
-    )
   }
 
   return (
@@ -143,6 +105,45 @@ export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps)
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Your Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input type="email" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone (Optional)</FormLabel>
+                  <FormControl>
+                    <Input type="tel" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="notes"

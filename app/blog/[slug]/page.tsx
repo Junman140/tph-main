@@ -6,17 +6,39 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { MainNav } from '@/components/layout/main-nav'
 
+interface BlogPost {
+  id: string;
+  title: string;
+  content: string;
+  slug: string;
+  excerpt: string | null;
+  published: boolean;
+  created_at: string;
+  updated_at: string;
+  author_id: string;
+  tags: string[];
+}
+
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
   const supabase = createServerComponentClient({ cookies })
   
-  const { data: post } = await supabase
+  // Get the current session
+  const { data: { session } } = await supabase.auth.getSession();
+
+  // Fetch the post
+  const { data: post, error } = await supabase
     .from('posts')
     .select('*')
     .eq('slug', params.slug)
-    .single()
+    .single();
 
-  if (!post) {
-    notFound()
+  if (error || !post) {
+    notFound();
+  }
+
+  // Check if user has access to this post
+  if (!post.published && (!session || session.user.id !== post.author_id)) {
+    notFound();
   }
 
   return (
@@ -34,7 +56,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
             </h1>
             <div className="flex items-center space-x-4 text-muted-foreground">
               <time dateTime={post.created_at}>
-                {format(new Date(post.created_at), 'MMMM dd, yyyy')}
+                {format(new Date(post.created_at), 'MMMM d, yyyy')}
               </time>
               <div className="text-sm">{post.reading_time} min read</div>
             </div>

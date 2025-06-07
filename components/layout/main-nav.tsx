@@ -11,7 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Menu, X, Sun, Moon } from "lucide-react"
 import { useTheme } from "next-themes"
-import { SignIn, SignUp, UserButton, SignedIn, SignedOut } from "@clerk/nextjs"
+// Authentication removed
 
 // Separate theme toggle component
 function ThemeToggle() {
@@ -130,31 +130,20 @@ export function MainNav() {
 
           <div className="flex items-center space-x-4">
             <ThemeToggle />
-            <SignedIn>
-              <UserButton
-                appearance={{
-                  elements: {
-                    avatarBox: "w-10 h-10",
-                  },
-                }}
-              />
-            </SignedIn>
-            <SignedOut>
-              <Button asChild variant="ghost" className="hidden md:inline-flex">
-                <Link href="/sign-in">Sign In</Link>
+            <div className="hidden md:flex items-center space-x-4">
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/donate">Donate</Link>
               </Button>
-              <Button asChild className="hidden md:inline-flex">
-                <Link href="/sign-up">Sign Up</Link>
+              <Button asChild size="sm">
+                <Link href="/contact">Contact Us</Link>
               </Button>
-            </SignedOut>
-
+            </div>
             {/* Mobile menu button */}
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
                 <Button
                   variant="ghost"
                   className="md:hidden"
-                  size="icon"
                 >
                   <Menu className="h-6 w-6" />
                   <span className="sr-only">Open menu</span>
@@ -245,26 +234,18 @@ export function MainNav() {
                     </div>
                   </div>
                   <div className="border-t border-border px-4 py-6">
-                    <SignedIn>
-                      <div className="flex items-center space-x-4">
-                        <UserButton />
-                        <span className="text-sm font-medium">Account</span>
-                      </div>
-                    </SignedIn>
-                    <SignedOut>
-                      <div className="flex flex-col space-y-3">
-                        <Button asChild variant="outline" className="w-full">
-                          <Link href="/sign-in" onClick={() => setIsOpen(false)}>
-                            Sign In
-                          </Link>
-                        </Button>
-                        <Button asChild className="w-full">
-                          <Link href="/sign-up" onClick={() => setIsOpen(false)}>
-                            Sign Up
-                          </Link>
-                        </Button>
-                      </div>
-                    </SignedOut>
+                    <div className="flex flex-col space-y-3">
+                      <Button asChild variant="outline" className="w-full">
+                        <Link href="/donate" onClick={() => setIsOpen(false)}>
+                          Donate
+                        </Link>
+                      </Button>
+                      <Button asChild className="w-full">
+                        <Link href="/contact" onClick={() => setIsOpen(false)}>
+                          Contact Us
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </SheetContent>

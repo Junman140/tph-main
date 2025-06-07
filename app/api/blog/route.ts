@@ -1,71 +1,101 @@
-import { auth } from "@clerk/nextjs"
-import { createClient } from "@supabase/supabase-js"
-import { NextResponse } from "next/server"
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const { userId } = await auth()
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 })
+    const supabase = createRouteHandlerClient({ cookies });
+    
+    // Check authentication
+    const { data: { session }, error: authError } = await supabase.auth.getSession();
+    if (authError || !session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
     }
 
-    const body = await req.json()
-    const { title, slug, content, tags, isDraft } = body
+    const { title, content, published, slug, excerpt, tags } = await request.json();
 
-    // Convert comma-separated tags string to array
-    const tagsArray = tags.split(",").map((tag: string) => tag.trim()).filter(Boolean)
+    // Validate required fields
+    if (!title || !content || !slug) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
 
+    // Insert the post
     const { data, error } = await supabase
-      .from("blog_posts")
+      .from('posts')
       .insert([
         {
           title,
-          slug,
           content,
-          tags: tagsArray,
-          author_id: userId,
-          published_at: isDraft ? null : new Date().toISOString()
+          published: published || false,
+          slug,
+          excerpt,
+          tags: tags || [],
+          author_id: session.user.id
         }
       ])
       .select()
-      .single()
+      .single();
 
     if (error) {
-      console.error(error)
-      return new NextResponse("Database Error", { status: 500 })
+      console.error('Error creating post:', error);
+      return NextResponse.json(
+        { error: 'Failed to create post' },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json(data)
+    return NextResponse.json(data);
   } catch (error) {
-    console.error(error)
-    return new NextResponse("Internal Error", { status: 500 })
+    console.error('Error in POST /api/blog:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 
-export async function GET(req: Request) {
+export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(req.url)
-    const isDraft = searchParams.get("isDraft") === "true"
+    const supabase = createRouteHandlerClient({ cookies });
+    
+    // Get the current session
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    let query = supabase
+      .from('posts')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    const { data, error } = await supabase
-      .from("blog_posts")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .eq("published_at", isDraft ? null : "not.is.null")
-
-    if (error) {
-      console.error(error)
-      return new NextResponse("Database Error", { status: 500 })
+    // If user is not authenticated, only show published posts
+    if (!session) {
+      query = query.eq('published', true);
+    } else {
+      // If user is authenticated, show their unpublished posts too
+      query = query.or(`published.eq.true,author_id.eq.${session.user.id}`);
     }
 
-    return NextResponse.json(data)
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching posts:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch posts' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(data);
   } catch (error) {
-    console.error(error)
-    return new NextResponse("Internal Error", { status: 500 })
+    console.error('Error in GET /api/blog:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 } 

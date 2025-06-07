@@ -7,42 +7,67 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
+import { useToast } from "@/components/ui/use-toast"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { slugify } from "@/lib/utils"
 
 export default function NewBlogPost() {
   const router = useRouter()
+  const { toast } = useToast()
+  const supabase = createClientComponentClient()
   const [isLoading, setIsLoading] = useState(false)
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+
     setIsLoading(true)
 
     const formData = new FormData(e.currentTarget)
-    const data = {
-      title: formData.get("title") as string,
-      slug: formData.get("slug") as string,
-      content: formData.get("content") as string,
-      tags: formData.get("tags") as string,
-      isDraft: false
-    }
+    const title = formData.get("title") as string
+    const content = formData.get("content") as string
+    const tags = formData.get("tags") as string
+    const authorName = formData.get("author") as string
+    const isDraft = false
 
     try {
-      const res = await fetch("/api/blog", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: {
-          "Content-Type": "application/json"
-        }
-      })
+      // Generate slug from title
+      const slug = slugify(title)
 
-      if (!res.ok) {
-        throw new Error("Failed to create post")
+      // Insert into Supabase
+      const { data, error } = await supabase
+        .from('posts')
+        .insert([
+          {
+            title,
+            content,
+            slug,
+            tags: tags.split(',').map(tag => tag.trim()).filter(Boolean),
+            author_name: authorName,
+            published: !isDraft,
+            excerpt: content.substring(0, 150) + '...'
+          }
+        ])
+        .select()
+        .single()
+
+      if (error) {
+        throw error
       }
+
+      toast({
+        title: "Success",
+        description: "Blog post created successfully"
+      })
 
       router.push("/admin/blog")
       router.refresh()
     } catch (error) {
       console.error(error)
-      // You should show an error toast here
+      toast({
+        variant: "destructive",
+        title: "Error creating post",
+        description: error instanceof Error ? error.message : "Failed to create post"
+      })
     } finally {
       setIsLoading(false)
     }
@@ -50,38 +75,58 @@ export default function NewBlogPost() {
 
   async function saveDraft(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault()
+
     setIsLoading(true)
 
     const form = e.currentTarget.form
     if (!form) return
 
     const formData = new FormData(form)
-    const data = {
-      title: formData.get("title") as string,
-      slug: formData.get("slug") as string,
-      content: formData.get("content") as string,
-      tags: formData.get("tags") as string,
-      isDraft: true
-    }
+    const title = formData.get("title") as string
+    const content = formData.get("content") as string
+    const tags = formData.get("tags") as string
+    const authorName = formData.get("author") as string
+    const isDraft = true
 
     try {
-      const res = await fetch("/api/blog", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: {
-          "Content-Type": "application/json"
-        }
-      })
+      // Generate slug from title
+      const slug = slugify(title)
 
-      if (!res.ok) {
-        throw new Error("Failed to save draft")
+      // Insert into Supabase
+      const { data, error } = await supabase
+        .from('posts')
+        .insert([
+          {
+            title,
+            content,
+            slug,
+            tags: tags.split(',').map(tag => tag.trim()).filter(Boolean),
+            author_name: authorName,
+            published: !isDraft,
+            excerpt: content.substring(0, 150) + '...'
+          }
+        ])
+        .select()
+        .single()
+
+      if (error) {
+        throw error
       }
+
+      toast({
+        title: "Success",
+        description: "Draft saved successfully"
+      })
 
       router.push("/admin/blog")
       router.refresh()
     } catch (error) {
       console.error(error)
-      // You should show an error toast here
+      toast({
+        variant: "destructive",
+        title: "Error saving draft",
+        description: error instanceof Error ? error.message : "Failed to save draft"
+      })
     } finally {
       setIsLoading(false)
     }
@@ -101,8 +146,8 @@ export default function NewBlogPost() {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="slug">URL Slug</Label>
-              <Input id="slug" name="slug" required disabled={isLoading} />
+              <Label htmlFor="author">Author Name</Label>
+              <Input id="author" name="author" required disabled={isLoading} />
             </div>
             
             <div className="space-y-2">
