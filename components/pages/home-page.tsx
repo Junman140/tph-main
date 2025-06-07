@@ -84,7 +84,7 @@ const TESTIMONIALS = [
   },
 ]
 
-// Sermon type definition
+// Sermon/Podcast type definition
 interface Sermon {
   id: string
   title: string
@@ -227,6 +227,100 @@ function HomepageSermons() {
           transition={{ duration: 0.5, delay: index * 0.1 }}
         >
           <SermonCard sermon={sermon} />
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
+// Component to fetch and display podcasts on the homepage
+function PodcastSection() {
+  // Use the same fetch function as sermons since they both come from Spotify
+  const { data: podcasts, isLoading, error } = useQuery<Sermon[]>({
+    queryKey: ['podcasts'],
+    queryFn: fetchSermons,
+  })
+
+  // Display loading state
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <SermonSkeleton key={index} />
+        ))}
+      </div>
+    )
+  }
+
+  // Display error state
+  if (error || !podcasts) {
+    return (
+      <div className="text-center p-8 bg-red-50 rounded-lg text-red-600">
+        <p>Unable to load podcasts at this time. Please check back later.</p>
+      </div>
+    )
+  }
+
+  // If no podcasts are available
+  if (podcasts.length === 0) {
+    return (
+      <div className="text-center p-8 bg-yellow-50 rounded-lg text-yellow-600">
+        <p>No podcasts available at this time. Check back soon for new content.</p>
+      </div>
+    )
+  }
+
+  // Display podcasts (limit to 3 for homepage)
+  const homepagePodcasts = podcasts.slice(0, 3)
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {homepagePodcasts.map((podcast, index) => (
+        <motion.div
+          key={podcast.id}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: index * 0.1 }}
+        >
+          <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow duration-300">
+            <div className="aspect-[4/3] relative bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+              {podcast.imageUrl ? (
+                <Image
+                  src={podcast.imageUrl}
+                  alt={podcast.title}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
+              ) : (
+                <Headphones className="h-20 w-20 text-primary/20" />
+              )}
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+                <a href={podcast.audioUrl} target="_blank" rel="noopener noreferrer">
+                  <Button variant="secondary" size="icon" className="rounded-full bg-primary text-white hover:bg-primary/90 h-16 w-16">
+                    <Play className="h-8 w-8" />
+                  </Button>
+                </a>
+              </div>
+            </div>
+            <CardContent className="p-6">
+              <div className="flex justify-between items-start mb-3">
+                <h3 className="text-xl font-semibold line-clamp-1">{podcast.title}</h3>
+                <Badge variant="outline" className="text-xs">{Math.floor(podcast.duration / 60000)} min</Badge>
+              </div>
+              <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{podcast.description}</p>
+              <div className="flex justify-between items-center text-sm text-muted-foreground">
+                <span className="flex items-center">
+                  <User className="h-4 w-4 mr-1" />
+                  TPH Global
+                </span>
+                <span className="flex items-center">
+                  <Calendar className="h-4 w-4 mr-1" />
+                  {formatDistance(new Date(podcast.date), new Date(), { addSuffix: true })}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
       ))}
     </div>
@@ -501,6 +595,33 @@ export default function HomePage() {
                   </Card>
                 </motion.div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Podcast Section */}
+        <section className="py-16 bg-muted/30 dark:bg-muted/10">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4 border-primary/20 text-primary">
+                Listen & Grow
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Latest Podcasts</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Spiritual insights and teachings to inspire your faith journey, available anytime, anywhere.
+              </p>
+            </div>
+            
+            {/* Podcast section component to fetch and display podcasts from Spotify API */}
+            <PodcastSection />
+            
+            <div className="text-center mt-10">
+              <Link href="/podcasts">
+                <Button variant="outline" className="gap-2">
+                  View All Episodes
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
             </div>
           </div>
         </section>
