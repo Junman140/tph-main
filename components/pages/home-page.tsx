@@ -511,7 +511,7 @@ export default function HomePage() {
 
 
 
-        {/* Gallery Section (Replacing Sermons) */}
+        {/* Gallery Section  */}
         <section className="relative h-[600px] overflow-hidden">
           <div className="absolute inset-0 z-10 bg-black/50 flex flex-col items-center justify-center text-white">
             <h2 className="text-4xl md:text-5xl font-bold mb-4 text-center">Our Gallery</h2>
