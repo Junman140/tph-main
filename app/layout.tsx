@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { MainNav } from "@/components/layout/main-nav";
 import { Footer } from "@/components/layout/footer";
+import ErrorBoundary from "@/components/error-boundary";
 
 const geistSans = GeistSans;
 const geistMono = GeistMono;
@@ -20,14 +21,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
-        <Providers>
-          <MainNav />
-          <main className="flex-1">
-            {children}
-          </main>
-          <Footer />
-        </Providers>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`} suppressHydrationWarning={true}>
+        <ErrorBoundary>
+          <Providers>
+            <MainNav />
+            <main className="flex-1">
+              {children}
+            </main>
+            <Footer />
+          </Providers>
+        </ErrorBoundary>
       </body>
     </html>
   );

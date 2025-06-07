@@ -4,7 +4,12 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+<<<<<<< HEAD
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+=======
+import { useAuthenticatedSupabase } from "@/app/providers/supabase-provider"
+import { useAuth } from "@clerk/nextjs"
+>>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import {
@@ -31,7 +36,7 @@ type PrayerFormValues = z.infer<typeof prayerFormSchema>
 export function PrayerForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
-  const supabase = createClientComponentClient()
+  const { supabase, isSignedIn } = useAuthenticatedSupabase()
 
   const form = useForm<PrayerFormValues>({
     resolver: zodResolver(prayerFormSchema),
@@ -43,6 +48,18 @@ export function PrayerForm() {
   })
 
   const onSubmit = async (data: PrayerFormValues) => {
+<<<<<<< HEAD
+=======
+    if (!isSignedIn || !userId) {
+      toast({
+        variant: "destructive",
+        title: "Authentication required",
+        description: "Please sign in to submit a prayer request"
+      })
+      return
+    }
+
+>>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
     setIsSubmitting(true)
     try {
       const { error } = await supabase

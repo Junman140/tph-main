@@ -1,7 +1,11 @@
 "use client"
 
 import { useState } from "react"
+<<<<<<< HEAD
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+=======
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+>>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
@@ -14,12 +18,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Heart, Check } from "lucide-react"
+<<<<<<< HEAD
 import { TestimonySection } from "./testimony-section"
 import { useSupabaseClient } from "@supabase/auth-helpers-react"
+=======
+>>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { format } from 'date-fns'
 import { Badge } from "@/components/ui/badge"
 import { MainNav } from "@/components/layout/main-nav"
+import { useAuthenticatedSupabase } from '@/app/providers/supabase-provider'
 
 interface Prayer {
   id: string;
@@ -51,9 +59,16 @@ const prayerSchema = z.object({
   verseReference: z.string().optional(),
 })
 
+// We'll use the authenticated supabase client from the provider
+
 function PrayerCard({ prayer }: { prayer: Prayer }) {
+<<<<<<< HEAD
   const supabase = useSupabase();
+=======
+  const { toast } = useToast();
+>>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
   const queryClient = useQueryClient();
+  const { supabase, isSignedIn } = useAuthenticatedSupabase();
 
   const [showTestimonyForm, setShowTestimonyForm] = useState(false)
   const [testimonyData, setTestimonyData] = useState<TestimonyFormData>({
@@ -64,6 +79,7 @@ function PrayerCard({ prayer }: { prayer: Prayer }) {
 
   const markAsAnsweredMutation = useMutation({
     mutationFn: async (data: TestimonyFormData) => {
+<<<<<<< HEAD
       if (!supabase) throw new Error("Supabase client not available");
 
       // In public site, only get public prayers
@@ -87,6 +103,12 @@ function PrayerCard({ prayer }: { prayer: Prayer }) {
         .eq('is_private', false)  // Only public prayers
         .order('created_at', { ascending: false });
 
+=======
+      if (!isSignedIn) {
+        throw new Error('You must be signed in to mark a prayer as answered');
+      }
+      
+>>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
       const { error: prayerError } = await supabase
         .from('prayers')
         .update({ status: 'answered', answered_at: new Date().toISOString() })
@@ -97,7 +119,10 @@ function PrayerCard({ prayer }: { prayer: Prayer }) {
       const { error: testimonyError } = await supabase
         .from('testimonies')
         .insert({
+<<<<<<< HEAD
           user_id: 'anonymous', // Anonymous user ID for public site
+=======
+>>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
           prayer_id: prayer.id,
           title: data.title,
           content: data.content,
@@ -127,6 +152,7 @@ function PrayerCard({ prayer }: { prayer: Prayer }) {
 
   const supportPrayerMutation = useMutation({
     mutationFn: async () => {
+<<<<<<< HEAD
       if (!supabase) throw new Error("Supabase client not available");
 
       // In a public site without authentication, support is tracked anonymously
@@ -150,6 +176,26 @@ function PrayerCard({ prayer }: { prayer: Prayer }) {
         .eq('id', prayer.id);
         
       if (updateError) throw updateError;
+=======
+      if (!isSignedIn) {
+        throw new Error('You must be signed in to support a prayer');
+      }
+      
+      const { error: supportError } = await supabase
+        .from('prayer_support')
+        .insert({ prayer_id: prayer.id, commitment: 'once' });
+
+      if (supportError) throw supportError;
+
+      const { error: rpcError } = await supabase.rpc('increment_prayer_count', {
+        prayer_id_param: prayer.id
+      });
+
+      if (rpcError) {
+        console.error("Failed to increment prayer count:", rpcError);
+        throw new Error("Failed to update prayer count.");
+      }
+>>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['prayers'] });
@@ -291,10 +337,16 @@ function PrayerCard({ prayer }: { prayer: Prayer }) {
 }
 
 export default function PrayerPage() {
+<<<<<<< HEAD
   const supabase = useSupabase();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState("prayers")
   const [activeTab, setActiveTab] = useState("all")
+=======
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("all");
+  const { toast } = useToast();
+>>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
 
   const form = useForm<z.infer<typeof prayerSchema>>({
     resolver: zodResolver(prayerSchema),
@@ -307,6 +359,7 @@ export default function PrayerPage() {
     },
   })
 
+<<<<<<< HEAD
   const prayersQuery = useQuery({
     queryKey: ['prayers'],
     queryFn: async () => {
@@ -337,16 +390,55 @@ export default function PrayerPage() {
 
       if (error) {
         console.error('Error fetching prayers:', error);
+=======
+  const { supabase, executeAuthenticatedQuery, isSignedIn } = useAuthenticatedSupabase();
+
+  const { data: prayers = [], isLoading: isLoadingPrayers } = useQuery({
+    queryKey: ['prayers'],
+    enabled: true,
+    queryFn: async () => {
+      try {
+        console.log('Fetching prayers');
+        // First check if we have any prayers
+        const { data: existingPrayers, error: checkError } = await supabase
+          .from('prayers')
+          .select('*')
+          .eq('is_private', false)
+          .order('created_at', { ascending: false });
+
+        if (checkError) {
+          console.log('Initial fetch error:', checkError);
+          throw checkError;
+        }
+
+        return existingPrayers || [];
+      } catch (error: any) {
+        console.error('Detailed error:', {
+          error,
+          message: error.message,
+          name: error.name,
+          stack: error.stack
+        });
+        toast({
+          title: 'Error fetching prayers',
+          description: error.message || 'Failed to load prayers. Please try again.',
+          variant: 'destructive',
+        });
+>>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
         throw error;
       }
 
       return data || [];
     },
+<<<<<<< HEAD
     enabled: !!supabase,
+=======
+>>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
     retry: 1,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
+<<<<<<< HEAD
   const filteredPrayers = prayersQuery.data?.filter(prayer => {
     if (activeTab === "all") return true;
     return prayer.status === activeTab;
@@ -371,6 +463,33 @@ export default function PrayerPage() {
             status: 'pending'
           }
         ]);
+=======
+  const filteredPrayers = prayers.filter(prayer => {
+    if (activeTab === "pending") return prayer.status === "pending";
+    if (activeTab === "answered") return prayer.status === "answered";
+    return !prayer.is_private;
+  });
+
+  const submitPrayerMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof prayerSchema>) => {
+      if (!isSignedIn) {
+        throw new Error('You must be signed in to submit a prayer request');
+      }
+      
+      const { error } = await supabase
+        .from('prayers')
+        .insert({
+          title: data.title,
+          content: data.content,
+          category: data.category,
+          is_private: data.isPrivate,
+          verse_reference: data.verseReference || null,
+          status: 'pending',
+          prayer_count: 0,
+          tags: [],
+          supporting_verses: data.verseReference ? [data.verseReference] : [],
+        });
+>>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
 
       if (error) throw error;
     },
@@ -380,7 +499,7 @@ export default function PrayerPage() {
       setTab('prayers');
       toast({
         title: "Prayer request submitted",
-        description: "Your prayer request has been shared with the community.",
+        description: "Your prayer request has been submitted successfully.",
       });
     },
     onError: (error: any) => {
@@ -393,7 +512,7 @@ export default function PrayerPage() {
     },
   });
 
-  if (!isLoaded || isLoadingPrayers) {
+  if (isLoadingPrayers) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
@@ -402,14 +521,6 @@ export default function PrayerPage() {
   }
 
   const onSubmit = (data: z.infer<typeof prayerSchema>) => {
-    if (!user) {
-      toast({
-        title: "Please sign in",
-        description: "You need to be signed in to submit prayer requests",
-        variant: "destructive",
-      });
-      return;
-    }
     submitPrayerMutation.mutate(data);
   };
 
@@ -541,7 +652,7 @@ export default function PrayerPage() {
           </TabsContent>
         </Tabs>
 
-        <TestimonySection />
+
 
       </main>
     </div>

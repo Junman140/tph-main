@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 
 const BIBLE_API_KEY = process.env.BIBLE_API_KEY
+// TEMP DEBUG: Log first 6 chars of API key (rest masked)
+console.log('BIBLE_API_KEY (start):', BIBLE_API_KEY ? BIBLE_API_KEY.slice(0, 6) + '...' : 'NOT SET');
 const BIBLE_API_URL = "https://api.scripture.api.bible/v1"
 
 // Bible IDs for different translations

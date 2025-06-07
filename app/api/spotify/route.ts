@@ -8,6 +8,21 @@ const SPOTIFY_SHOW_ID = process.env.SPOTIFY_SHOW_ID
 const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID
 const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET
 
+interface SpotifyEpisode {
+  id: string
+  name: string
+  description: string
+  release_date: string
+  duration_ms: number
+  images: { url: string }[]
+  external_urls: { spotify: string }
+}
+
+interface SpotifyResponse {
+  items: SpotifyEpisode[]
+  next: string | null
+}
+
 async function getAccessToken() {
   console.log('Checking Spotify credentials:', {
     hasClientId: !!SPOTIFY_CLIENT_ID,
@@ -52,32 +67,46 @@ export async function GET() {
     const accessToken = await getAccessToken()
     console.log('Got access token:', accessToken ? 'Yes' : 'No')
     
-    // Get the show episodes
-    const response = await fetch(
-      `${SPOTIFY_API_BASE}/shows/${SPOTIFY_SHOW_ID}/episodes?market=US&limit=3`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-        next: {
-          revalidate: 3600 // Cache for 1 hour
-        }
-      }
-    )
-
-    console.log('Spotify API Response Status:', response.status)
+    // Fetch all episodes using pagination
+    let allEpisodes: SpotifyEpisode[] = []
+    let nextUrl: string | null = `${SPOTIFY_API_BASE}/shows/${SPOTIFY_SHOW_ID}/episodes?market=US&limit=50` // Max limit per request
     
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('Spotify API Error Response:', errorText)
-      throw new Error(`Failed to fetch Spotify episodes: ${response.status} ${response.statusText}`)
-    }
+    // Continue fetching until we have all episodes
+    while (nextUrl) {
+      const response = await fetch(
+        nextUrl,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+          next: {
+            revalidate: 3600 // Cache for 1 hour
+          }
+        }
+      )
 
-    const data = await response.json()
-    console.log('Successfully fetched episodes:', data.items?.length || 0)
+      console.log('Spotify API Response Status:', response.status)
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Spotify API Error Response:', errorText)
+        throw new Error(`Failed to fetch Spotify episodes: ${response.status} ${response.statusText}`)
+      }
+
+      const data: SpotifyResponse = await response.json()
+      console.log('Fetched episodes batch:', data.items?.length || 0)
+      
+      // Add this batch to our collection
+      allEpisodes = [...allEpisodes, ...data.items]
+      
+      // Check if there are more episodes to fetch
+      nextUrl = data.next
+    }
+    
+    console.log('Successfully fetched all episodes:', allEpisodes.length)
     
     // Transform the data to match our frontend expectations
-    const transformedEpisodes = data.items.map(episode => ({
+    const transformedEpisodes = allEpisodes.map(episode => ({
       id: episode.id,
       title: episode.name,
       description: episode.description,
@@ -93,4 +122,4 @@ export async function GET() {
     // Return empty array instead of error to prevent UI from showing error state
     return NextResponse.json([])
   }
-} 
+}

@@ -9,6 +9,7 @@ import { format } from "date-fns"
 import Link from "next/link"
 import { Search } from "lucide-react"
 import { MainNav } from "@/components/layout/main-nav"
+<<<<<<< HEAD
 import { useSupabaseClient } from "@supabase/auth-helpers-react"
 import { useQuery } from "@tanstack/react-query"
 
@@ -65,6 +66,83 @@ export default function BlogPage() {
       return data || []
     }
   })
+=======
+import { useSupabase } from "@/app/providers/supabase-provider"
+import { useState, useEffect } from 'react'
+
+type Post = {
+  id: string
+  title: string
+  date: string
+  reading_time: number
+  description: string
+  tags: string[]
+  slug: string
+}
+
+export default function BlogPage() {
+  const supabase = useSupabase()
+  const [posts, setPosts] = useState<Post[]>([])
+  const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('blog_posts')
+          .select('id, title, slug, description, date, reading_time, tags')
+          .order('date', { ascending: false })
+
+        if (error) {
+          setFetchError(error.message || 'Unknown error')
+          console.error('Supabase error fetching posts:', error)
+          return
+        }
+
+        if (!data) {
+          setFetchError('No data returned from Supabase')
+          return
+        }
+
+        setPosts(data)
+      } catch (err) {
+        setFetchError((err as Error).message)
+        console.error('Unexpected error fetching posts:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPosts()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <MainNav />
+        <div className="flex-grow pt-24 pb-16">
+          <div className="container mx-auto px-4 max-w-7xl">
+            <p>Loading posts...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (fetchError) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <MainNav />
+        <div className="flex-grow pt-24 pb-16">
+          <div className="container mx-auto px-4 max-w-7xl">
+            <p className="text-red-500 font-bold">Error loading posts: {fetchError}</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+>>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -87,6 +165,7 @@ export default function BlogPage() {
               </div>
             </div>
 
+<<<<<<< HEAD
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[1, 2, 3].map((i) => (
@@ -94,6 +173,17 @@ export default function BlogPage() {
                     <CardHeader>
                       <div className="h-6 bg-muted rounded w-3/4" />
                       <div className="h-4 bg-muted rounded w-1/2 mt-2" />
+=======
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {posts.map((post) => (
+                <Link key={post.id} href={`/blog/${post.slug}`}>
+                  <Card className="h-full hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <CardTitle>{post.title}</CardTitle>
+                      <CardDescription>
+                        {format(new Date(post.date), "MMMM d, yyyy")} • {post.reading_time} min read
+                      </CardDescription>
+>>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
                     </CardHeader>
                     <CardContent>
                       <div className="h-4 bg-muted rounded w-full" />

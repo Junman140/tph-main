@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { useSupabaseClient } from "@supabase/auth-helpers-react"
+import { useUser } from "@clerk/nextjs"
 import { useToast } from "@/components/ui/use-toast"
 import {
   Dialog,
@@ -26,13 +26,19 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { useQuery } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
 
 const formSchema = z.object({
+<<<<<<< HEAD
   name: z.string().min(2, "Name is required"),
   email: z.string().email("Please enter a valid email"),
   phone: z.string().optional(),
+=======
+  fullName: z.string().min(2, { message: "Full name is required" }),
+  email: z.string().email({ message: "Valid email is required" }),
+  phoneNumber: z.string().min(10, { message: "Valid phone number is required" }),
+  location: z.string().min(2, { message: "Location is required" }),
+>>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
   notes: z.string().optional(),
 })
 
@@ -46,6 +52,7 @@ interface RegistrationFormProps {
 export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps) {
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+<<<<<<< HEAD
   const supabase = useSupabaseClient()
   const { toast } = useToast()
 
@@ -91,6 +98,50 @@ export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps)
     }
   }
 
+=======
+  const { user } = useUser()
+  const { toast } = useToast()
+
+  // Initialize form with default values
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      phoneNumber: "",
+      location: "",
+      notes: "",
+    },
+  })
+  
+  // Update form values when user data is available
+  React.useEffect(() => {
+    if (user) {
+      form.setValue('fullName', user.fullName || "");
+      form.setValue('email', user.primaryEmailAddress?.emailAddress || "");
+    }
+  }, [user, form])
+
+  // Simple form submission handler
+  const onSubmit = (values: FormData) => {
+    console.log('Form submitted with values:', values);
+    setIsSubmitting(true);
+    
+    // Show success message
+    toast({
+      title: "Registration successful",
+      description: "You have been registered for the event. We will contact you with further details.",
+    });
+    
+    // Close the form and reset
+    setOpen(false);
+    form.reset();
+    setIsSubmitting(false);
+  }
+
+  // No pre-checks needed, form will handle everything
+
+>>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -107,10 +158,17 @@ export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps)
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
+<<<<<<< HEAD
               name="name"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Your Name</FormLabel>
+=======
+              name="fullName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Full Name</FormLabel>
+>>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -133,10 +191,17 @@ export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps)
             />
             <FormField
               control={form.control}
+<<<<<<< HEAD
               name="phone"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Phone (Optional)</FormLabel>
+=======
+              name="phoneNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number</FormLabel>
+>>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
                   <FormControl>
                     <Input type="tel" {...field} />
                   </FormControl>
@@ -146,6 +211,22 @@ export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps)
             />
             <FormField
               control={form.control}
+<<<<<<< HEAD
+=======
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+>>>>>>> 1cf74a4c204a145ed64b21e282601a5d5b79fa19
               name="notes"
               render={({ field }) => (
                 <FormItem>

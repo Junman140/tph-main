@@ -14,8 +14,9 @@ import { RegistrationForm } from "@/components/events/registration-form"
 
 const FEATURED_EVENTS = [
   {
+    id: "women-of-substance-2025",
     title: "Women Of Substance",
-    type: "Confrence",
+    type: "Conference",
     date: "Sunday, 13th April 2025",
     time: "08:00 AM",
     location: "Main Sanctuary",
@@ -23,6 +24,7 @@ const FEATURED_EVENTS = [
     description: "Join us for a powerful time of worship and the Word.",
   },
   {
+    id: "dominion-2025-system",
     title: "Dominion 2025 System",
     type: "Conference",
     date: "Sunday, 13th May 2025",
@@ -32,6 +34,7 @@ const FEATURED_EVENTS = [
     description: "Three days of inspiration, worship, and community for believers.",
   },
   {
+    id: "alive-music-experience-2025",
     title: "Alive Music Experience",
     type: "Special Event",
     date: "Sunday, 21st March 2025",
@@ -71,7 +74,7 @@ function EventCard({ event }: { event: any }) {
             {event.location}
           </div>
         </div>
-        <RegistrationForm eventTitle={event.title} eventId={""} />
+        <RegistrationForm eventTitle={event.title} eventId={event.id} />
       </CardContent>
     </Card>
   )
