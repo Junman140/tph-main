@@ -19,17 +19,17 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 const carouselImages = [
   {
-    src: "/gallery/fresh1.jpg",
+    src: "/gallery/daddy5.jpg",
     alt: "Sunday Worship Service",
     description: "Experience the power of worship together",
   },
   {
-    src: "/gallery/fresh2.jpg",
+    src: "/gallery/daddy5.jpg",
     alt: "Community Fellowship",
     description: "Growing together in faith and love",
   },
   {
-    src: "/gallery/fresh3.jpg",
+    src: "/gallery/daddy5.jpg",
     alt: "Youth Ministry",
     description: "Empowering the next generation",
   },
