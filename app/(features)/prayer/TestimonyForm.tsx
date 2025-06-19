@@ -4,8 +4,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { useAuthenticatedSupabase } from "@/app/providers/supabase-provider"
-import { useAuth } from "@clerk/nextjs"
+import { useSupabase } from "@/app/providers/supabase-provider"
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import {
@@ -22,6 +21,8 @@ import { Textarea } from "@/components/ui/textarea"
 const testimonyFormSchema = z.object({
   title: z.string().min(1, "Title is required").max(100),
   content: z.string().min(1, "Testimony is required").max(2000),
+  name: z.string().min(1, "Name is required").max(100),
+  email: z.string().email("Invalid email address").min(1, "Email is required"),
 })
 
 type TestimonyFormValues = z.infer<typeof testimonyFormSchema>
@@ -33,35 +34,28 @@ interface TestimonyFormProps {
 
 export function TestimonyForm({ prayerId, onSuccess }: TestimonyFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { userId } = useAuth()
   const { toast } = useToast()
-  const { supabase, isSignedIn } = useAuthenticatedSupabase()
+  const supabase = useSupabase()
 
   const form = useForm<TestimonyFormValues>({
     resolver: zodResolver(testimonyFormSchema),
     defaultValues: {
       title: "",
       content: "",
+      name: "",
+      email: "",
     },
   })
 
   const onSubmit = async (data: TestimonyFormValues) => {
-    if (!isSignedIn || !userId) {
-      toast({
-        variant: "destructive",
-        title: "Authentication required",
-        description: "Please sign in to share your testimony"
-      })
-      return
-    }
-
     setIsSubmitting(true)
     try {
       const { error } = await supabase
         .from('testimonies')
         .insert([
           {
-            user_id: userId,
+            name: data.name,
+            email: data.email,
             prayer_id: prayerId,
             title: data.title,
             content: data.content,
@@ -90,6 +84,32 @@ export function TestimonyForm({ prayerId, onSuccess }: TestimonyFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Your Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Your full name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Your Email</FormLabel>
+              <FormControl>
+                <Input type="email" placeholder="Your email address" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="title"

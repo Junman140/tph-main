@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -13,12 +14,12 @@ import {
 } from "@/components/ui/select"
 import { Card } from "@/components/ui/card"
 import { useSupabase } from "@/app/providers/supabase-provider"
-import { useAuth } from "@clerk/nextjs"
 
 // Define the Note type for TypeScript using the existing prayers table structure
 interface Note {
   id: string;
-  user_id: string;
+  name: string;
+  email: string;
   title: string;
   content: string;
   verse_reference: string;
@@ -29,6 +30,8 @@ interface Note {
 export default function BiblePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [note, setNote] = useState('')
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
   const [book, setBook] = useState('John')
   const [chapter, setChapter] = useState('1')
   const [verse, setVerse] = useState('1')
@@ -39,47 +42,31 @@ export default function BiblePage() {
   const [savedNotes, setSavedNotes] = useState<Note[]>([])
   const { toast } = useToast()
   const supabase = useSupabase()
-  const { userId, isSignedIn } = useAuth()
 
   // Fetch Bible verse when book, chapter, or verse changes
   // Fetch notes for the current verse
   useEffect(() => {
-    // Skip if not signed in
-    if (!isSignedIn || !userId) {
-      setSavedNotes([]);
-      return;
-    }
-    
     const fetchNotes = async () => {
       try {
-        // Create a simple static note for now to avoid database issues
-        // This is a temporary solution until we can properly set up the database
-        const staticNote = {
-          id: '1',
-          user_id: userId,
-          title: `Note for ${book} ${chapter}:${verse}`,
-          content: 'Your notes for this verse will appear here once you save them.',
-          verse_reference: `${book} ${chapter}:${verse}`,
-          created_at: new Date().toISOString(),
-          category: 'bible-note',
-          is_private: true,
-          status: 'pending',
-          tags: ['bible'],
-          prayer_count: 0,
-          supporting_verses: [`${book} ${chapter}:${verse}`]
-        };
+        // Fetch notes for this verse reference
+        const { data, error } = await supabase
+          .from('bible_notes')
+          .select('*')
+          .eq('verse_reference', `${book} ${chapter}:${verse}`)
+          .order('created_at', { ascending: false });
         
-        // Set static note for now
-        setSavedNotes([]);
+        if (error) throw error;
+        
+        setSavedNotes(data || []);
       } catch (error) {
-        console.error('Error handling notes:', error);
+        console.error('Error fetching notes:', error);
         // Don't show error toast to user - just silently handle it
         setSavedNotes([]);
       }
     };
     
     fetchNotes();
-  }, [book, chapter, verse, userId, isSignedIn]);
+  }, [book, chapter, verse, supabase]);
   
   // Fetch the Bible verse
   useEffect(() => {
@@ -153,72 +140,55 @@ export default function BiblePage() {
     try {
       setIsLoading(true)
       
-      if (!isSignedIn || !userId) {
+      // Validate inputs
+      if (!note.trim()) {
         toast({
-          title: "Authentication required",
-          description: "Please sign in to save notes",
+          title: "Note required",
+          description: "Please enter a note",
           variant: "destructive"
         })
         return
       }
 
-      // For now, let's just store the note locally since we're having database issues
-      // This is a temporary solution until database access is properly configured
       const verseReference = `${book} ${chapter}:${verse}`;
       
-      // Create a new note object
-      const newNote = {
-        id: Date.now().toString(), // Use timestamp as ID
-        user_id: userId,
-        title: `Bible Note: ${verseReference}`,
-        content: note,
-        verse_reference: verseReference,
-        created_at: new Date().toISOString(),
-        category: 'bible-note',
-        is_private: true,
-        status: 'pending',
-        tags: ['bible', 'note'],
-        prayer_count: 0,
-        supporting_verses: [verseReference]
-      };
-      
-      // Add the new note to the saved notes
-      setSavedNotes(prev => [newNote, ...prev]);
-      
-      // Success message
-      toast({
-        title: "Note saved",
-        description: "Your note has been saved locally"
-      });
-      
-      // Clear the note input
-      setNote('');
-      
-      return;
-      
-      // The code below is commented out until database issues are resolved
-      /*
-      // Insert the note into the prayers table
+      // Insert the note into the bible_notes table
       const { error } = await supabase
-        .from('prayers')
+        .from('bible_notes')
         .insert({
-          user_id: userId,
+          name: name || 'Anonymous',
+          email: email || '',
           title: `Bible Note: ${verseReference}`,
           content: note,
           verse_reference: verseReference,
-          category: 'bible-note',
-          is_private: true,
-          status: 'pending',
-          tags: ['bible', 'note'],
-          prayer_count: 0,
-          supporting_verses: [verseReference]
+          created_at: new Date().toISOString(),
+          category: 'bible-note'
         })
 
       if (error) {
         console.error('Supabase error details:', error);
         throw error;
       }
-      */
+      
+      // Refresh notes
+      const { data: updatedNotes } = await supabase
+        .from('bible_notes')
+        .select('*')
+        .eq('verse_reference', verseReference)
+        .order('created_at', { ascending: false });
+      
+      setSavedNotes(updatedNotes || []);
+      
+      // Success message
+      toast({
+        title: "Note saved",
+        description: "Your note has been saved"
+      });
+      
+      // Clear the inputs
+      setNote('');
+      setName('');
+      setEmail('');
 
       toast({
         title: "Success!",
@@ -226,6 +196,8 @@ export default function BiblePage() {
       })
 
       setNote('')
+      setName('')
+      setEmail('')
 
     } catch (error) {
       console.error('Error saving note:', error)
@@ -338,28 +310,22 @@ export default function BiblePage() {
             <Card className="p-6 bg-[#0A0F1C] border-[#1a1f2c]">
               <h2 className="text-xl font-semibold mb-4 text-white">Previous Notes</h2>
               
-              {isSignedIn ? (
-                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
-                  {savedNotes.length > 0 ? (
-                    savedNotes.map((savedNote) => (
-                      <div key={savedNote.id} className="bg-[#141927] border border-[#1a1f2c] p-3 rounded-md">
-                        <p className="text-sm text-gray-400 mb-2">
-                          {new Date(savedNote.created_at).toLocaleDateString()} {new Date(savedNote.created_at).toLocaleTimeString()}
-                        </p>
-                        <p className="text-white whitespace-pre-wrap">{savedNote.content}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-400">
-                      No notes saved for this verse yet.
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <p className="text-gray-400">
-                  Sign in to view your saved notes.
-                </p>
-              )}
+              <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+                {savedNotes.length > 0 ? (
+                  savedNotes.map((savedNote) => (
+                    <div key={savedNote.id} className="bg-[#141927] border border-[#1a1f2c] p-3 rounded-md">
+                      <p className="text-sm text-gray-400 mb-2">
+                        {savedNote.name || 'Anonymous'} • {new Date(savedNote.created_at).toLocaleDateString()}
+                      </p>
+                      <p className="text-white whitespace-pre-wrap">{savedNote.content}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-400">
+                    No notes saved for this verse yet.
+                  </p>
+                )}
+              </div>
             </Card>
           </div>
 
@@ -372,12 +338,28 @@ export default function BiblePage() {
                   {book} {chapter}:{verse}
                 </span>
               </div>
-              <Textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="Write your notes here..."
-                className="min-h-[200px] mb-4 bg-[#141927] border-[#1a1f2c] text-white placeholder:text-gray-400"
-              />
+              
+              <div className="space-y-4 mb-4">
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your Name (optional)"
+                  className="bg-[#141927] border-[#1a1f2c] text-white placeholder:text-gray-400"
+                />
+                <Input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Your Email (optional)"
+                  className="bg-[#141927] border-[#1a1f2c] text-white placeholder:text-gray-400"
+                />
+                <Textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Write your notes here..."
+                  className="min-h-[200px] bg-[#141927] border-[#1a1f2c] text-white placeholder:text-gray-400"
+                />
+              </div>
+              
               <Button 
                 onClick={handleSaveNote} 
                 disabled={isLoading || !note.trim()}

@@ -1,10 +1,11 @@
 "use client"
 
 import { useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useSupabase } from '@/app/providers/supabase-provider'
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 interface RegistrationFormProps {
@@ -16,39 +17,37 @@ interface RegistrationFormProps {
 
 export function RegistrationForm({ eventId, eventTitle, isOpen, onClose }: RegistrationFormProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const [fullName, setFullName] = useState('')
+  const [email, setEmail] = useState('')
   const [notes, setNotes] = useState('')
   const { toast } = useToast()
-  const supabase = createClientComponentClient()
+  const supabase = useSupabase()
 
   const handleSubmit = async () => {
     try {
       setIsLoading(true)
       
-      // Get the current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
-      if (userError) throw userError
-
-      if (!user) {
+      if (!fullName || !email) {
         toast({
-          title: "Authentication required",
-          description: "Please sign in to register for events",
+          title: "Missing information",
+          description: "Please provide your name and email",
           variant: "destructive"
         })
         return
       }
 
-      // Check if already registered
+      // Check if already registered with this email
       const { data: existing } = await supabase
         .from('event_registrations')
         .select()
         .eq('event_id', eventId)
-        .eq('user_id', user.id)
+        .eq('email', email)
         .single()
 
       if (existing) {
         toast({
           title: "Already registered",
-          description: "You have already registered for this event",
+          description: "This email has already been registered for this event",
           variant: "destructive"
         })
         return
@@ -59,7 +58,8 @@ export function RegistrationForm({ eventId, eventTitle, isOpen, onClose }: Regis
         .from('event_registrations')
         .insert({
           event_id: eventId,
-          user_id: user.id,
+          full_name: fullName,
+          email: email,
           notes: notes.trim(),
           status: 'registered'
         })
@@ -72,6 +72,8 @@ export function RegistrationForm({ eventId, eventTitle, isOpen, onClose }: Regis
       })
 
       // Clear form and close dialog
+      setFullName('')
+      setEmail('')
       setNotes('')
       onClose()
 
@@ -98,6 +100,27 @@ export function RegistrationForm({ eventId, eventTitle, isOpen, onClose }: Regis
           <p className="text-sm text-muted-foreground">
             Fill out the form below to register for this event. We will contact you with further details.
           </p>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Full Name *</label>
+            <Input
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Your full name"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Email *</label>
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Your email address"
+              required
+            />
+          </div>
           
           <div>
             <label className="block text-sm font-medium mb-1">Additional Notes (Optional)</label>

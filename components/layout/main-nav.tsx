@@ -6,11 +6,9 @@ import Image from "next/image"
 import { usePathname } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Menu, X, Sun, Moon } from "lucide-react"
 import { useTheme } from "next-themes"
-import { SignIn, SignUp, UserButton, SignedIn, SignedOut } from "@clerk/nextjs"
 
 // Separate theme toggle component
 function ThemeToggle() {
@@ -128,29 +126,20 @@ export function MainNav() {
 
           <div className="flex items-center space-x-4">
             <ThemeToggle />
-            <SignedIn>
-              <UserButton
-                appearance={{
-                  elements: {
-                    avatarBox: "w-10 h-10",
-                  },
-                }}
-              />
-            </SignedIn>
-            <SignedOut>
-              <Button asChild className="hidden md:inline-flex bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800">
-                <Link href="/sign-in">Sign In</Link>
+            <div className="hidden md:flex items-center space-x-4">
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/donate">Donate</Link>
               </Button>
-              <Button asChild className="hidden md:inline-flex">
-                <Link href="/sign-up">Sign Up</Link>
+              <Button asChild size="sm">
+                <Link href="/contact">Contact Us</Link>
               </Button>
-            </SignedOut>
-
+            </div>
             {/* Mobile menu button */}
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
                 <Button
-                  className="md:hidden bg-transparent p-2"
+                  variant="ghost"
+                  className="md:hidden"
                 >
                   <Menu className="h-6 w-6" />
                   <span className="sr-only">Open menu</span>
@@ -240,26 +229,18 @@ export function MainNav() {
                     </div>
                   </div>
                   <div className="border-t border-border px-4 py-6">
-                    <SignedIn>
-                      <div className="flex items-center space-x-4">
-                        <UserButton />
-                        <span className="text-sm font-medium">Account</span>
-                      </div>
-                    </SignedIn>
-                    <SignedOut>
-                      <div className="flex flex-col space-y-3">
-                        <Button asChild className="w-full border border-gray-200 bg-transparent hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-gray-800">
-                          <Link href="/sign-in" onClick={() => setIsOpen(false)}>
-                            Sign In
-                          </Link>
-                        </Button>
-                        <Button asChild className="w-full">
-                          <Link href="/sign-up" onClick={() => setIsOpen(false)}>
-                            Sign Up
-                          </Link>
-                        </Button>
-                      </div>
-                    </SignedOut>
+                    <div className="flex flex-col space-y-3">
+                      <Button asChild variant="outline" className="w-full">
+                        <Link href="/donate" onClick={() => setIsOpen(false)}>
+                          Donate
+                        </Link>
+                      </Button>
+                      <Button asChild className="w-full">
+                        <Link href="/contact" onClick={() => setIsOpen(false)}>
+                          Contact Us
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </SheetContent>

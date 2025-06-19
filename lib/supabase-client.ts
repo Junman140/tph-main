@@ -1,15 +1,18 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createClient } from '@supabase/supabase-js'
 import { Database } from '@/types/supabase'
 
 export function getSupabaseClient() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  if (!supabaseUrl) {
     throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL')
   }
-  if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  if (!supabaseAnonKey) {
     throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY')
   }
   
-  return createClientComponentClient<Database>()
+  return createClient<Database>(supabaseUrl, supabaseAnonKey)
 }
 
 // Helper to check database connectivity

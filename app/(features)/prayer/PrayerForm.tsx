@@ -4,8 +4,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { useAuthenticatedSupabase } from "@/app/providers/supabase-provider"
-import { useAuth } from "@clerk/nextjs"
+import { useSupabase } from "@/app/providers/supabase-provider"
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import {
@@ -24,6 +23,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 const prayerFormSchema = z.object({
   title: z.string().min(1, "Title is required").max(100),
   content: z.string().min(1, "Prayer request is required").max(1000),
+  name: z.string().min(1, "Name is required").max(100),
+  email: z.string().email("Invalid email address").min(1, "Email is required"),
   is_anonymous: z.boolean().default(false),
 })
 
@@ -31,36 +32,29 @@ type PrayerFormValues = z.infer<typeof prayerFormSchema>
 
 export function PrayerForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { userId } = useAuth()
   const { toast } = useToast()
-  const { supabase, isSignedIn } = useAuthenticatedSupabase()
+  const supabase = useSupabase()
 
   const form = useForm<PrayerFormValues>({
     resolver: zodResolver(prayerFormSchema),
     defaultValues: {
       title: "",
       content: "",
+      name: "",
+      email: "",
       is_anonymous: false,
     },
   })
 
   const onSubmit = async (data: PrayerFormValues) => {
-    if (!isSignedIn || !userId) {
-      toast({
-        variant: "destructive",
-        title: "Authentication required",
-        description: "Please sign in to submit a prayer request"
-      })
-      return
-    }
-
     setIsSubmitting(true)
     try {
       const { error } = await supabase
         .from('prayers')
         .insert([
           {
-            user_id: userId,
+            name: data.is_anonymous ? 'Anonymous' : data.name,
+            email: data.is_anonymous ? null : data.email,
             title: data.title,
             content: data.content,
             is_anonymous: data.is_anonymous,
@@ -91,6 +85,58 @@ export function PrayerForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
+          name="is_anonymous"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>Submit anonymously</FormLabel>
+                <FormDescription>
+                  Your name will not be shown with the prayer request
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+
+        {!form.watch('is_anonymous') && (
+          <>
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Your Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Your full name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Your Email</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="Your email address" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
+        )}
+
+        <FormField
+          control={form.control}
           name="title"
           render={({ field }) => (
             <FormItem>
@@ -119,30 +165,11 @@ export function PrayerForm() {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="is_anonymous"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>Submit anonymously</FormLabel>
-                <FormDescription>
-                  Your name will not be shown with the prayer request
-                </FormDescription>
-              </div>
-            </FormItem>
-          )}
-        />
+
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Submitting..." : "Submit Prayer Request"}
         </Button>
       </form>
     </Form>
   )
-} 
+}

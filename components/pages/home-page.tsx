@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
+import useEmblaCarousel from "embla-carousel-react"
+import Autoplay from "embla-carousel-autoplay"
 import { ArrowRight, Calendar, Users, Video, Heart, ChevronDown, Play, User, MapPin, Clock, Headphones } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,9 +12,6 @@ import { Badge } from "@/components/ui/badge"
 import { MainNav } from "@/components/layout/main-nav"
 import { format, formatDistanceToNow, formatDistance } from "date-fns"
 import Image from "next/image"
-import { Carousel } from "@/components/ui/carousel"
-import useEmblaCarousel from 'embla-carousel-react'
-import Autoplay from 'embla-carousel-autoplay'
 import { useSupabase } from "@/app/providers/supabase-provider"
 import { useQuery } from "@tanstack/react-query"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -82,12 +81,12 @@ const TESTIMONIALS = [
   {
     quote:
       "The community at TPH Global has become my spiritual family, supporting me through every step of my faith journey.",
-    name: "Pst Peace Ekarika",
-    role: "Campus president",
+    name: "Pst Caleb George",
+    role: "Theater Minister",
   },
 ]
 
-// Sermon type definition
+// Sermon/Podcast type definition
 interface Sermon {
   id: string
   title: string
@@ -235,6 +234,8 @@ function HomepageSermons() {
     </div>
   )
 }
+
+
 
 const GALLERY_ITEMS = [
   {
@@ -508,7 +509,9 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Gallery Section (Replacing Sermons) */}
+
+
+        {/* Gallery Section  */}
         <section className="relative h-[600px] overflow-hidden">
           <div className="absolute inset-0 z-10 bg-black/50 flex flex-col items-center justify-center text-white">
             <h2 className="text-4xl md:text-5xl font-bold mb-4 text-center">Our Gallery</h2>

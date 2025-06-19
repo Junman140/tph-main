@@ -1,10 +1,13 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+<<<<<<< HEAD
 // import { useUser } from "@clerk/nextjs"
+=======
+>>>>>>> 5e6249a34edccea41166557f36960c5c5283811a
 import { useToast } from "@/components/ui/use-toast"
 import {
   Dialog,
@@ -31,7 +34,7 @@ import { Loader2 } from "lucide-react"
 const formSchema = z.object({
   fullName: z.string().min(2, { message: "Full name is required" }),
   email: z.string().email({ message: "Valid email is required" }),
-  phoneNumber: z.string().min(10, { message: "Valid phone number is required" }),
+  phoneNumber: z.string().min(10, { message: "Valid phone number is required" }).optional(),
   location: z.string().min(2, { message: "Location is required" }),
   notes: z.string().optional(),
 })
@@ -46,7 +49,10 @@ interface RegistrationFormProps {
 export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps) {
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+<<<<<<< HEAD
   // const { user } = useUser()
+=======
+>>>>>>> 5e6249a34edccea41166557f36960c5c5283811a
   const { toast } = useToast()
 
   // Initialize form with default values
@@ -61,6 +67,7 @@ export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps)
     },
   })
   
+<<<<<<< HEAD
   // Update form values when user data is available{ we dont need users to login}
   // React.useEffect(() => {
   //   if (user) {
@@ -68,26 +75,37 @@ export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps)
   //     form.setValue('email', user.primaryEmailAddress?.emailAddress || "");
   //   }
   // }, [user, form])
+=======
+  // No longer need to prefill user data since auth is removed
+>>>>>>> 5e6249a34edccea41166557f36960c5c5283811a
 
-  // Simple form submission handler
-  const onSubmit = (values: FormData) => {
-    console.log('Form submitted with values:', values);
+  // Form submission handler
+  const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
-    
-    // Show success message
-    toast({
-      title: "Registration successful",
-      description: "You have been registered for the event. We will contact you with further details.",
-    });
-    
-    // Close the form and reset
-    setOpen(false);
-    form.reset();
-    setIsSubmitting(false);
+    try {
+      // Here you would typically send the data to your backend
+      // For now, we'll just log it and show a success message
+      console.log('Form submitted with values:', data);
+      
+      // Show success message
+      toast({
+        title: "Registration successful",
+        description: "You have been registered for the event. We will contact you with further details.",
+      });
+      
+      // Close the form and reset
+      setOpen(false);
+      form.reset();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to register for the event",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
-
-  // No pre-checks needed, form will handle everything
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>

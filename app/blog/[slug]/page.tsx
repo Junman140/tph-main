@@ -1,22 +1,43 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import { format } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { MainNav } from '@/components/layout/main-nav'
 
+interface BlogPost {
+  id: string;
+  title: string;
+  content: string;
+  slug: string;
+  excerpt: string | null;
+  published: boolean;
+  created_at: string;
+  updated_at: string;
+  author_id: string;
+  tags: string[];
+}
+
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
-  const supabase = createServerComponentClient({ cookies })
-  
-  const { data: post } = await supabase
+  // Initialize Supabase client directly
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  // Fetch the post
+  const { data: post, error } = await supabase
     .from('posts')
     .select('*')
     .eq('slug', params.slug)
-    .single()
+    .single();
 
-  if (!post) {
-    notFound()
+  if (error || !post) {
+    notFound();
+  }
+
+  // Only check if post is published, no auth check
+  if (!post.published) {
+    notFound();
   }
 
   return (
@@ -34,7 +55,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
             </h1>
             <div className="flex items-center space-x-4 text-muted-foreground">
               <time dateTime={post.created_at}>
-                {format(new Date(post.created_at), 'MMMM dd, yyyy')}
+                {format(new Date(post.created_at), 'MMMM d, yyyy')}
               </time>
               <div className="text-sm">{post.reading_time} min read</div>
             </div>

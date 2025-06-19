@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useUser } from "@clerk/nextjs";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,52 +38,35 @@ export function RegistrationForm({ eventId, eventTitle }: { eventId: string; eve
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const { user, isLoaded: isAuthLoaded } = useUser();
   const supabase = useSupabaseClient();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      fullName: user?.fullName ?? "",
-      email: user?.primaryEmailAddress?.emailAddress ?? "",
-      phoneNumber: user?.primaryPhoneNumber?.phoneNumber ?? "",
+      fullName: "",
+      email: "",
+      phoneNumber: "",
       eventId: eventId,
     },
   });
 
   useEffect(() => {
-    if (user) {
-      form.reset({
-        fullName: user.fullName ?? "",
-        email: user.primaryEmailAddress?.emailAddress ?? "",
-        phoneNumber: user.primaryPhoneNumber?.phoneNumber ?? "",
-        eventId: eventId,
+    form.reset({
+      fullName: "",
+      email: "",
+      phoneNumber: "",
+      eventId: eventId,
       });
-    }
-  }, [user, eventId, form]);
+  }, [eventId, form]);
 
-  if (!isAuthLoaded) {
     return (
       <Button variant="outline" className="w-full" disabled>
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         Loading...
       </Button>
     );
-  }
-
-  if (!user) {
-    return (
-      <Button variant="outline" className="w-full" onClick={() => window.location.href = '/sign-in'}>
-        Sign In to Register
-      </Button>
-    );
-  }
-
+  };
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!user) {
-      toast({ title: "Authentication Error", description: "Please sign in to register.", variant: "destructive" });
-      return;
-    }
     if (!supabase) {
       toast({ title: "Database Error", description: "Could not connect to the database.", variant: "destructive" });
       return;
@@ -97,7 +79,7 @@ export function RegistrationForm({ eventId, eventTitle }: { eventId: string; eve
         .from('event_registrations')
         .insert({
           event_id: values.eventId,
-          user_id: user.id,
+          user_id: 'anonymous',
           status: 'registered',
         })
         .select()
@@ -226,3 +208,11 @@ export function RegistrationForm({ eventId, eventTitle }: { eventId: string; eve
     </Dialog>
   );
 } 
+
+function setIsOpen(arg0: boolean) {
+  throw new Error("Function not implemented.");
+}
+function setShowSuccess(arg0: boolean) {
+  throw new Error("Function not implemented.");
+}
+

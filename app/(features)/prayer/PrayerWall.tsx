@@ -1,19 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useAuthenticatedSupabase } from "@/app/providers/supabase-provider"
-import { useAuth } from "@clerk/nextjs"
+import { useSupabase } from "@/app/providers/supabase-provider"
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Check, Heart } from "lucide-react"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from "@radix-ui/react-dialog"
+import { DialogHeader } from "@/components/ui/dialog"
 import { TestimonyForm } from "./TestimonyForm"
 
 interface Prayer {
@@ -37,9 +32,8 @@ export function PrayerWall() {
   const [prayers, setPrayers] = useState<Prayer[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedPrayerId, setSelectedPrayerId] = useState<string | null>(null)
-  const { userId } = useAuth()
   const { toast } = useToast()
-  const { supabase, isSignedIn } = useAuthenticatedSupabase()
+  const supabase = useSupabase()
 
   useEffect(() => {
     fetchPrayers()
@@ -67,24 +61,13 @@ export function PrayerWall() {
 
       if (supportsError) throw supportsError
 
-      // Get user's supports if logged in
-      let userSupports: string[] = []
-      if (userId) {
-        const { data: supports } = await supabase
-          .from('prayer_support')
-          .select('prayer_id')
-          .eq('user_id', userId)
-
-        userSupports = supports?.map(s => s.prayer_id) || []
-      }
-
       // Combine the data
       const prayersWithSupport = prayers?.map(prayer => ({
         ...prayer,
         _count: {
           supports: supportCounts.filter(s => s.prayer_id === prayer.id).length
         },
-        has_supported: userSupports.includes(prayer.id)
+        has_supported: false
       }))
 
       setPrayers(prayersWithSupport || [])
@@ -100,36 +83,13 @@ export function PrayerWall() {
   }
 
   const toggleSupport = async (prayerId: string) => {
-    if (!isSignedIn || !userId) {
-      toast({
-        variant: "destructive",
-        title: "Authentication required",
-        description: "Please sign in to support prayers"
-      })
-      return
-    }
 
     try {
       const prayer = prayers.find(p => p.id === prayerId)
       if (!prayer) return
 
-      if (prayer.has_supported) {
-        await supabase
-          .from('prayer_support')
-          .delete()
-          .eq('prayer_id', prayerId)
-          .eq('user_id', userId)
-        
-        prayer._count.supports--
-      } else {
-        await supabase
-          .from('prayer_support')
-          .insert([{ prayer_id: prayerId, user_id: userId }])
-        
-        prayer._count.supports++
-      }
-
-      prayer.has_supported = !prayer.has_supported
+      // Simulate support count increment
+      prayer._count.supports++
       setPrayers([...prayers])
     } catch (error) {
       toast({
@@ -141,21 +101,12 @@ export function PrayerWall() {
   }
 
   const markAsAnswered = async (prayerId: string) => {
-    if (!isSignedIn || !userId) {
-      toast({
-        variant: "destructive",
-        title: "Authentication required",
-        description: "Please sign in to mark prayers as answered"
-      })
-      return
-    }
 
     try {
       const { error } = await supabase
         .from('prayers')
         .update({ status: 'answered' })
         .eq('id', prayerId)
-        .eq('user_id', userId)
 
       if (error) throw error
 
@@ -207,16 +158,7 @@ export function PrayerWall() {
                     <Heart className="h-4 w-4 mr-1" />
                     {prayer._count.supports}
                   </Button>
-                  {userId === prayer.user.id && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => markAsAnswered(prayer.id)}
-                    >
-                      <Check className="h-4 w-4 mr-1" />
-                      Answered
-                    </Button>
-                  )}
+                  {/* Admin controls removed for public site */}
                 </div>
               </div>
               <p className="text-sm whitespace-pre-wrap">{prayer.content}</p>

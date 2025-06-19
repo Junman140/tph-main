@@ -7,7 +7,7 @@ import { PrayerWall } from "./PrayerWall"
 import { TestimonyWall } from "./TestimonyWall"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
-import { useAuthenticatedSupabase } from '@/app/providers/supabase-provider'
+import { useSupabase } from '@/app/providers/supabase-provider'
 import { useToast } from "@/components/ui/use-toast"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -19,36 +19,15 @@ export default function PrayerPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [title, setTitle] = useState('')
   const [request, setRequest] = useState('')
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
   const [isAnonymous, setIsAnonymous] = useState(false)
   const { toast } = useToast()
-  const { supabase, isSignedIn } = useAuthenticatedSupabase()
-  const [userId, setUserId] = useState<string | null>(null)
-  
-  // Get the user ID when signed in
-  useEffect(() => {
-    if (isSignedIn) {
-      const getUserId = async () => {
-        const { data } = await supabase.auth.getUser()
-        if (data?.user) {
-          setUserId(data.user.id)
-        }
-      }
-      getUserId()
-    }
-  }, [isSignedIn, supabase.auth])
+  const supabase = useSupabase()
 
   const handleSubmit = async () => {
     try {
       setIsLoading(true)
-      
-      if (!isSignedIn) {
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to submit prayer requests",
-          variant: "destructive"
-        })
-        return
-      }
 
       // Validate inputs
       if (!title.trim() || !request.trim()) {
@@ -60,10 +39,10 @@ export default function PrayerPage() {
         return
       }
 
-      if (!userId) {
+      if (!isAnonymous && (!name.trim() || !email.trim())) {
         toast({
-          title: "User ID not found",
-          description: "Please try signing in again",
+          title: "Missing information",
+          description: "Please provide your name and email or submit anonymously",
           variant: "destructive"
         })
         return
@@ -71,12 +50,14 @@ export default function PrayerPage() {
       
       // Submit the prayer request
       const { error } = await supabase
-        .from('prayer_requests')
+        .from('prayers')
         .insert({
-          user_id: userId,
+          name: isAnonymous ? 'Anonymous' : name.trim(),
+          email: isAnonymous ? null : email.trim(),
           title: title.trim(),
-          request: request.trim(),
-          is_anonymous: isAnonymous
+          content: request.trim(),
+          is_anonymous: isAnonymous,
+          status: 'pending'
         })
 
       if (error) throw error
@@ -89,6 +70,8 @@ export default function PrayerPage() {
       // Clear the form
       setTitle('')
       setRequest('')
+      setName('')
+      setEmail('')
       setIsAnonymous(false)
 
     } catch (error) {
@@ -137,6 +120,29 @@ export default function PrayerPage() {
                 />
               </div>
 
+              {!isAnonymous && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Your Name</label>
+                    <Input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Your name"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Your Email</label>
+                    <Input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Your email address"
+                    />
+                  </div>
+                </>
+              )}
+
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="anonymous"
@@ -153,7 +159,7 @@ export default function PrayerPage() {
 
               <Button
                 onClick={handleSubmit}
-                disabled={isLoading || !title.trim() || !request.trim()}
+                disabled={isLoading || !title.trim() || !request.trim() || (!isAnonymous && (!name.trim() || !email.trim()))}
                 className="w-full"
               >
                 {isLoading ? "Submitting..." : "Submit Prayer Request"}
