@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { useUser } from "@clerk/nextjs"
+// import { useUser } from "@clerk/nextjs"
 import { useToast } from "@/components/ui/use-toast"
 import {
   Dialog,
@@ -46,7 +46,7 @@ interface RegistrationFormProps {
 export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps) {
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { user } = useUser()
+  // const { user } = useUser()
   const { toast } = useToast()
 
   // Initialize form with default values
@@ -61,13 +61,13 @@ export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps)
     },
   })
   
-  // Update form values when user data is available
-  React.useEffect(() => {
-    if (user) {
-      form.setValue('fullName', user.fullName || "");
-      form.setValue('email', user.primaryEmailAddress?.emailAddress || "");
-    }
-  }, [user, form])
+  // Update form values when user data is available{ we dont need users to login}
+  // React.useEffect(() => {
+  //   if (user) {
+  //     form.setValue('fullName', user.fullName || "");
+  //     form.setValue('email', user.primaryEmailAddress?.emailAddress || "");
+  //   }
+  // }, [user, form])
 
   // Simple form submission handler
   const onSubmit = (values: FormData) => {
