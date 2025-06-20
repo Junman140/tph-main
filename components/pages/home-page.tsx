@@ -397,7 +397,7 @@ export default function HomePage() {
           <div className="absolute inset-0 z-0">
             <Image
               src="/gallery/understanding.png"
-              alt="TPH Global"
+              alt="TPH Global SEASON OF "
               fill
               className="object-cover brightness-50"
               priority
