@@ -32,7 +32,7 @@ const FEATURED_EVENTS = [
     location: "Main Sanctuary",
     imageUrl: "events/JASON'S DEDICATION 2.jpg",
     description: "Join us for a powerful time of worship and the Word.",
-  }
+  },
   {
     id: "women-of-substance-2025",
     title: "Women Of Substance",
