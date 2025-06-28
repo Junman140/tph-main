@@ -15,6 +15,7 @@ import Image from "next/image"
 import { useSupabase } from "@/app/providers/supabase-provider"
 import { useQuery } from "@tanstack/react-query"
 import { Skeleton } from "@/components/ui/skeleton"
+import { getHomePageEvents, Event } from "@/lib/events-data"
 
 const carouselImages = [
   {
@@ -34,37 +35,25 @@ const carouselImages = [
   },
 ]
 
+// Utility function to parse date strings like "Sunday, 21st March 2025"
+function parseEventDate(dateString: string): Date {
+  try {
+    // Remove the day of week and ordinal suffixes
+    const cleanDate = dateString
+      .replace(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s/, '')
+      .replace(/(\d+)(st|nd|rd|th)/, '$1')
+    
+    return parse(cleanDate, 'd MMMM yyyy', new Date())
+  } catch (error) {
+    console.warn(`Could not parse date: ${dateString}`)
+    return new Date()
+  }
+}
+
 // Blog posts are loaded from the database
 
-const FEATURED_EVENTS = [
-  {
-    title: "Women Of Substance",
-    type: "Confrence",
-    date: "Sunday, 13th April 2025",
-    time: "08:00 AM",
-    location: "Main Sanctuary",
-    imageUrl: "/events/woman of substance 2025B.jpg",
-    description: "Join us for a powerful time of worship and the Word.",
-  },
-  {
-    title: "Dominion 2025 System",
-    type: "Conference",
-    date: "Sunday, 13th May 2025",
-    time: "08:00 AM",
-    location: "Main Sanctuary",
-    imageUrl: "/events/DOMINION 2025 SYSTEM.jpg",
-    description: "Three days of inspiration, worship, and community for believers.",
-  },
-  {
-    title: "Alive Music Experience",
-    type: "Special Event",
-    date: "Sunday, 21st March 2025",
-    time: "08:00 AM",
-    location: "Main Sanctuary",
-    imageUrl: "/events/ALIVE MUSIC EXPIRIENCE COTH.jpg",
-    description: "Celebrate the resurrection of Christ with special music and activities.",
-  },
-]
+// Get the first 3 events for homepage display (sorted by date)
+const FEATURED_EVENTS = getHomePageEvents(3)
 
 const TESTIMONIALS = [
   {
