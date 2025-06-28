@@ -43,6 +43,26 @@ const FEATURED_EVENTS = [
     imageUrl: "/events/ALIVE MUSIC EXPIRIENCE COTH.jpg",
     description: "Celebrate the resurrection of Christ with special music and activities.",
   },
+  {
+    id: "Young Ministers Confrence-2025",
+    title: "Young Ministers Confrence",
+    type: "Conference",
+    date: "Saturday, 28th June 2025",
+    time: "07:00 AM",
+    location: "Main Sanctuary",
+    imageUrl: "events/MINISTERS CONFERENCE.jpg",
+    description: "Join us for a powerful time of worship and the Word.",
+  },
+  {
+    id: "Jason Dedication",
+    title: "Jason Dedication",
+    type: "Child-dedication",
+    date: "Sunday, 13th July 2025",
+    time: "03:00 PM",
+    location: "Main Sanctuary",
+    imageUrl: "events/JASON'S DEDICATION 2.jpg",
+    description: "Join us for a powerful time of worship and the Word.",
+  }
 ]
 
 function EventCard({ event }: { event: any }) {
