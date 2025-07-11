@@ -37,7 +37,7 @@ export const ALL_EVENTS: Event[] = [
     id: "Young Ministers Confrence-2025",
     title: "Young Ministers Confrence",
     type: "Conference",
-    date: "Saturday, 28th June 2025",
+    date: "Saturday, 28th September 2025",
     time: "07:00 AM",
     location: "Main Sanctuary",
     imageUrl: "/events/MINISTERS CONFERENCE.jpg",

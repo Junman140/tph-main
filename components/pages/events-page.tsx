@@ -11,7 +11,7 @@ import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { RegistrationForm } from "@/components/events/registration-form"
-import { getUpcomingEvents, type Event } from "@/lib/events-data"
+import { getSortedEvents, type Event } from "@/lib/events-data"
 
 function EventCard({ event }: { event: Event }) {
   return (
@@ -71,15 +71,15 @@ function EventSkeleton() {
 }
 
 export default function EventsPage() {
-  // Get sorted upcoming events
-  const events = getUpcomingEvents();
+  // Get all events sorted by date (most recent first)
+  const events = getSortedEvents();
 
   return (
     <div className="min-h-screen flex flex-col">
       <MainNav />
       <main className="flex-grow container mx-auto px-4 py-8 mt-16">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-4xl font-bold">Upcoming Events</h1>
+          <h1 className="text-4xl font-bold">All Events</h1>
           <Calendar className="h-8 w-8 text-primary" />
         </div>
 
