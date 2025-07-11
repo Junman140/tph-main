@@ -11,7 +11,7 @@ import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { RegistrationForm } from "@/components/events/registration-form"
-import { FEATURED_EVENTS, Event } from "@/lib/events-data"
+import { getUpcomingEvents, type Event } from "@/lib/events-data"
 
 function EventCard({ event }: { event: Event }) {
   return (
@@ -71,8 +71,8 @@ function EventSkeleton() {
 }
 
 export default function EventsPage() {
-  // Using the FEATURED_EVENTS data directly
-  const events = FEATURED_EVENTS;
+  // Get sorted upcoming events
+  const events = getUpcomingEvents();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -85,7 +85,7 @@ export default function EventsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {events.map((event, index) => (
-            <EventCard key={index} event={event} />
+            <EventCard key={event.id} event={event} />
           ))}
         </div>
       </main>

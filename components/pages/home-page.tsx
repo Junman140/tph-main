@@ -15,7 +15,6 @@ import Image from "next/image"
 import { useSupabase } from "@/app/providers/supabase-provider"
 import { useQuery } from "@tanstack/react-query"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getHomePageEvents, Event } from "@/lib/events-data"
 
 const carouselImages = [
   {
@@ -35,25 +34,9 @@ const carouselImages = [
   },
 ]
 
-// Utility function to parse date strings like "Sunday, 21st March 2025"
-function parseEventDate(dateString: string): Date {
-  try {
-    // Remove the day of week and ordinal suffixes
-    const cleanDate = dateString
-      .replace(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s/, '')
-      .replace(/(\d+)(st|nd|rd|th)/, '$1')
-    
-    return parse(cleanDate, 'd MMMM yyyy', new Date())
-  } catch (error) {
-    console.warn(`Could not parse date: ${dateString}`)
-    return new Date()
-  }
-}
-
 // Blog posts are loaded from the database
 
-// Get the first 3 events for homepage display (sorted by date)
-const FEATURED_EVENTS = getHomePageEvents(3)
+import { getFeaturedEvents, type Event } from "@/lib/events-data"
 
 const TESTIMONIALS = [
   {
@@ -385,8 +368,8 @@ export default function HomePage() {
         <section className="relative h-[80vh] min-h-[600px] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 z-0">
             <Image
-              src="/gallery/understanding.png"
-              alt="TPH Global SEASON OF UNDERSTANDING"
+              src="/events/still3.jpeg"
+              alt="TPH Global SEASON OF STILL WATERS"
               fill
               className="object-cover brightness-50"
               priority
@@ -452,9 +435,9 @@ export default function HomePage() {
           <div className="container mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold mb-8 text-center">Featured Events</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {FEATURED_EVENTS.map((event, index) => (
+              {getFeaturedEvents().map((event, index) => (
                 <motion.div
-                  key={index}
+                  key={event.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}

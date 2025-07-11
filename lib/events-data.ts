@@ -1,23 +1,7 @@
-import { parse } from "date-fns"
+import { parse, format } from "date-fns"
 
-// Utility function to parse date strings like "Sunday, 21st March 2025"
-function parseEventDate(dateString: string): Date {
-  try {
-    // Remove the day of week and ordinal suffixes
-    const cleanDate = dateString
-      .replace(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s/, '')
-      .replace(/(\d+)(st|nd|rd|th)/, '$1')
-    
-    return parse(cleanDate, 'd MMMM yyyy', new Date())
-  } catch (error) {
-    console.warn(`Could not parse date: ${dateString}`)
-    return new Date()
-  }
-}
-
-// Event interface for type safety
 export interface Event {
-  id?: string
+  id: string
   title: string
   type: string
   date: string
@@ -28,17 +12,36 @@ export interface Event {
   parsedDate?: Date
 }
 
-// Shared events data
-const FEATURED_EVENTS_DATA: Event[] = [
+export const ALL_EVENTS: Event[] = [
   {
-    id: "alive-music-experience-2025",
-    title: "Alive Music Experience",
-    type: "Special Event",
-    date: "Sunday, 21st March 2025",
+    id: "Season of Still Waters",
+    title: "Shepherd School Awareness Service",
+    type: "Conference",
+    date: "Sunday, 13th July 2025",
     time: "08:00 AM",
     location: "Main Sanctuary",
-    imageUrl: "/events/ALIVE MUSIC EXPIRIENCE COTH.jpg",
-    description: "Celebrate the resurrection of Christ with special music and activities.",
+    imageUrl: "/events/STILL WATERS.jpg",
+    description: "Join us for a powerful time of worship and the Word.",
+  },
+  {
+    id: "Jason Dedication",
+    title: "Jason Dedication",
+    type: "Child-dedication",
+    date: "Sunday, 13th July 2025",
+    time: "03:00 PM",
+    location: "Main Sanctuary",
+    imageUrl: "/events/JASON'S DEDICATION 2.jpg",
+    description: "Join us for a powerful time of worship and the Word.",
+  },
+  {
+    id: "Young Ministers Confrence-2025",
+    title: "Young Ministers Confrence",
+    type: "Conference",
+    date: "Saturday, 28th June 2025",
+    time: "07:00 AM",
+    location: "Main Sanctuary",
+    imageUrl: "/events/MINISTERS CONFERENCE.jpg",
+    description: "Join us for a powerful time of worship and the Word.",
   },
   {
     id: "women-of-substance-2025",
@@ -61,36 +64,54 @@ const FEATURED_EVENTS_DATA: Event[] = [
     description: "Three days of inspiration, worship, and community for believers.",
   },
   {
-    id: "Young Ministers Confrence-2025",
-    title: "Young Ministers Confrence",
-    type: "Conference",
-    date: "Saturday, 28th June 2025",
-    time: "07:00 AM",
+    id: "alive-music-experience-2025",
+    title: "Alive Music Experience",
+    type: "Special Event",
+    date: "Sunday, 21st March 2025",
+    time: "08:00 AM",
     location: "Main Sanctuary",
-    imageUrl: "events/MINISTERS CONFERENCE.jpg",
-    description: "Join us for a powerful time of worship and the Word.",
-  },
-  {
-    id: "Jason Dedication",
-    title: "Jason Dedication",
-    type: "Child-dedication",
-    date: "Sunday, 13th July 2025",
-    time: "03:00 PM",
-    location: "Main Sanctuary",
-    imageUrl: "events/JASON'S DEDICATION 2.jpg",
-    description: "Join us for a powerful time of worship and the Word.",
+    imageUrl: "/events/ALIVE MUSIC EXPIRIENCE COTH.jpg",
+    description: "Celebrate the resurrection of Christ with special music and activities.",
   }
 ]
 
-// Sort events by date (most recent upcoming events first)
-export const FEATURED_EVENTS = FEATURED_EVENTS_DATA
-  .map(event => ({
-    ...event,
-    parsedDate: parseEventDate(event.date)
-  }))
-  .sort((a, b) => a.parsedDate!.getTime() - b.parsedDate!.getTime())
+// Function to parse date strings like "Sunday, 21st March 2025"
+function parseEventDate(dateStr: string): Date {
+  try {
+    // Remove ordinal indicators (st, nd, rd, th) and parse
+    const cleanDateStr = dateStr.replace(/(\d+)(st|nd|rd|th)/, '$1')
+    return parse(cleanDateStr, "EEEE, do MMMM yyyy", new Date())
+  } catch (error) {
+    console.error(`Error parsing date: ${dateStr}`, error)
+    return new Date()
+  }
+}
 
-// Get a limited number of events for homepage display
-export const getHomePageEvents = (limit: number = 3) => {
-  return FEATURED_EVENTS.slice(0, limit)
+// Function to get sorted events (most recent first)
+export function getSortedEvents(): Event[] {
+  return ALL_EVENTS
+    .map(event => ({
+      ...event,
+      parsedDate: parseEventDate(event.date)
+    }))
+    .sort((a, b) => {
+      if (!a.parsedDate || !b.parsedDate) return 0
+      return a.parsedDate.getTime() - b.parsedDate.getTime()
+    })
+}
+
+// Function to get upcoming events (events from today onwards)
+export function getUpcomingEvents(): Event[] {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  return getSortedEvents().filter(event => {
+    if (!event.parsedDate) return false
+    return event.parsedDate >= today
+  })
+}
+
+// Function to get featured events for homepage (first 3 upcoming events)
+export function getFeaturedEvents(): Event[] {
+  return getUpcomingEvents().slice(0, 3)
 } 
