@@ -18,17 +18,17 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 const carouselImages = [
   {
-    src: "/gallery/fresh1.jpg",
+    src: "/gallery/daddy5.jpg",
     alt: "Sunday Worship Service",
     description: "Experience the power of worship together",
   },
   {
-    src: "/gallery/fresh2.jpg",
+    src: "/gallery/daddy5.jpg",
     alt: "Community Fellowship",
     description: "Growing together in faith and love",
   },
   {
-    src: "/gallery/fresh3.jpg",
+    src: "/gallery/daddy5.jpg",
     alt: "Youth Ministry",
     description: "Empowering the next generation",
   },
@@ -36,35 +36,7 @@ const carouselImages = [
 
 // Blog posts are loaded from the database
 
-const FEATURED_EVENTS = [
-  {
-    title: "Women Of Substance",
-    type: "Confrence",
-    date: "Sunday, 13th April 2025",
-    time: "08:00 AM",
-    location: "Main Sanctuary",
-    imageUrl: "/events/woman of substance 2025B.jpg",
-    description: "Join us for a powerful time of worship and the Word.",
-  },
-  {
-    title: "Dominion 2025 System",
-    type: "Conference",
-    date: "Sunday, 13th May 2025",
-    time: "08:00 AM",
-    location: "Main Sanctuary",
-    imageUrl: "/events/DOMINION 2025 SYSTEM.jpg",
-    description: "Three days of inspiration, worship, and community for believers.",
-  },
-  {
-    title: "Alive Music Experience",
-    type: "Special Event",
-    date: "Sunday, 21st March 2025",
-    time: "08:00 AM",
-    location: "Main Sanctuary",
-    imageUrl: "/events/ALIVE MUSIC EXPIRIENCE COTH.jpg",
-    description: "Celebrate the resurrection of Christ with special music and activities.",
-  },
-]
+import { getFeaturedEvents, type Event } from "@/lib/events-data"
 
 const TESTIMONIALS = [
   {
@@ -463,9 +435,9 @@ export default function HomePage() {
           <div className="container mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold mb-8 text-center">Featured Events</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {FEATURED_EVENTS.map((event, index) => (
+              {getFeaturedEvents().map((event, index) => (
                 <motion.div
-                  key={index}
+                  key={event.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}

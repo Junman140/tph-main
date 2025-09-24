@@ -11,41 +11,9 @@ import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { RegistrationForm } from "@/components/events/registration-form"
+import { getSortedEvents, type Event } from "@/lib/events-data"
 
-const FEATURED_EVENTS = [
-  {
-    id: "women-of-substance-2025",
-    title: "Women Of Substance",
-    type: "Conference",
-    date: "Sunday, 13th April 2025",
-    time: "08:00 AM",
-    location: "Main Sanctuary",
-    imageUrl: "/events/woman of substance 2025B.jpg",
-    description: "Join us for a powerful time of worship and the Word.",
-  },
-  {
-    id: "dominion-2025-system",
-    title: "Dominion 2025 System",
-    type: "Conference",
-    date: "Sunday, 13th May 2025",
-    time: "08:00 AM",
-    location: "Main Sanctuary",
-    imageUrl: "/events/DOMINION 2025 SYSTEM.jpg",
-    description: "Three days of inspiration, worship, and community for believers.",
-  },
-  {
-    id: "alive-music-experience-2025",
-    title: "Alive Music Experience",
-    type: "Special Event",
-    date: "Sunday, 21st March 2025",
-    time: "08:00 AM",
-    location: "Main Sanctuary",
-    imageUrl: "/events/ALIVE MUSIC EXPIRIENCE COTH.jpg",
-    description: "Celebrate the resurrection of Christ with special music and activities.",
-  },
-]
-
-function EventCard({ event }: { event: any }) {
+function EventCard({ event }: { event: Event }) {
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 h-full">
       <div className="aspect-video relative">
@@ -103,21 +71,21 @@ function EventSkeleton() {
 }
 
 export default function EventsPage() {
-  // Using the FEATURED_EVENTS data directly
-  const events = FEATURED_EVENTS;
+  // Get all events sorted by date (most recent first)
+  const events = getSortedEvents();
 
   return (
     <div className="min-h-screen flex flex-col">
       <MainNav />
       <main className="flex-grow container mx-auto px-4 py-8 mt-16">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-4xl font-bold">Upcoming Events</h1>
+          <h1 className="text-4xl font-bold">All Events</h1>
           <Calendar className="h-8 w-8 text-primary" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {events.map((event, index) => (
-            <EventCard key={index} event={event} />
+            <EventCard key={event.id} event={event} />
           ))}
         </div>
       </main>

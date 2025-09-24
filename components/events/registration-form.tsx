@@ -59,6 +59,14 @@ export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps)
     },
   })
   
+  // Update form values when user data is available{ we dont need users to login}
+  // React.useEffect(() => {
+  //   if (user) {
+  //     form.setValue('fullName', user.fullName || "");
+  //     form.setValue('email', user.primaryEmailAddress?.emailAddress || "");
+  //   }
+  // }, [user, form])
+
   // No longer need to prefill user data since auth is removed
 
   // Form submission handler
