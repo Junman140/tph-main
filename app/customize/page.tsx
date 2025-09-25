@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { removeBackground } from "@imgly/background-removal"
+
 import { useState, useRef, useCallback, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,16 +18,13 @@ export default function DPBannerCustomizer() {
 
   const handleImageUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (!file) return
-
-  const reader = new FileReader()
-  reader.onload = async (e) => {
-    const base64 = e.target?.result as string
-
-    // Remove background
-    const processed = await removeBackground(base64) // returns a base64 PNG with transparent bg
-    setUserImage(processed)
-  }
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setUserImage(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
   }, [])
 
   const generateBanner = useCallback(async () => {
