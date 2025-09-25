@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-
+import { removeBackground } from "@imgly/background-removal"
 import { useState, useRef, useCallback, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,13 +18,16 @@ export default function DPBannerCustomizer() {
 
   const handleImageUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setUserImage(e.target?.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
+    if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = async (e) => {
+    const base64 = e.target?.result as string
+
+    // Remove background
+    const processed = await removeBackground(base64) // returns a base64 PNG with transparent bg
+    setUserImage(processed)
+  }
   }, [])
 
   const generateBanner = useCallback(async () => {
@@ -66,7 +69,7 @@ export default function DPBannerCustomizer() {
       const imageX = 240
       const imageY = 260
       const imageWidth = 600
-      const imageHeight = 750
+      const imageHeight = 700
 
       // Create a rounded rectangle clipping path for the photo area only
       ctx.save()
@@ -254,7 +257,7 @@ export default function DPBannerCustomizer() {
                   {userImage && userName.trim() && (
                     <Button
                       onClick={downloadBanner}
-                      className="w-full mt-4 bg-lime-500 hover:bg-blue-600 text-black font-semibold"
+                      className="w-full mt-4 bg-lime-500 hover:bg-blue-500 text-black font-semibold"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Download Banner
