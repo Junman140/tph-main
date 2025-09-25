@@ -254,7 +254,7 @@ export default function DPBannerCustomizer() {
                   {userImage && userName.trim() && (
                     <Button
                       onClick={downloadBanner}
-                      className="w-full mt-4 bg-lime-500 hover:bg-lime-600 text-black font-semibold"
+                      className="w-full mt-4 bg-lime-500 hover:bg-blue-600 text-black font-semibold"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Download Banner

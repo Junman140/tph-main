@@ -209,13 +209,13 @@ export function MainNav() {
                         Prayer
                       </Link>
                       <Link
-                        href="/blog"
+                        href="/customize"
                         className={`text-lg font-medium hover:text-primary ${
-                          pathname === "/blog" ? "text-primary" : "text-foreground/60"
+                          pathname === "/customize" ? "text-primary" : "text-foreground/60"
                         }`}
                         onClick={() => setIsOpen(false)}
                       >
-                        Blog
+                        dp
                       </Link>
                       <Link
                         href="/about"
