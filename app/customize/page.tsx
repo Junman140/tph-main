@@ -63,10 +63,10 @@ export default function DPBannerCustomizer() {
         userImg.src = userImage
       })
 
-      const imageX = 230
+      const imageX = 235
       const imageY = 250
       const imageWidth = 600
-      const imageHeight = 740
+      const imageHeight = 745
 
       // Create a rounded rectangle clipping path for the photo area only
       ctx.save()
