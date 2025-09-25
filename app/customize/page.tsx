@@ -63,8 +63,8 @@ export default function DPBannerCustomizer() {
         userImg.src = userImage
       })
 
-      const imageX = 260
-      const imageY = 250
+      const imageX = 270
+      const imageY = 255
       const imageWidth = 600
       const imageHeight = 745
 
