@@ -139,7 +139,7 @@ export default function DPBannerCustomizer() {
 
     const canvas = canvasRef.current
     const link = document.createElement("a")
-    link.download = `${userName || "my"}-young-africa-works-banner.png`
+    link.download = `${userName || "my"}-tph-global.png`
     link.href = canvas.toDataURL("image/png")
     link.click()
   }, [userName])
@@ -154,7 +154,7 @@ export default function DPBannerCustomizer() {
       <div className="p-4">
         <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
           {/* Header */}
-          <div className="text-center space-y-4">
+          <div className="mt-16 md:mt-24 text-center space-y-4">
             <h1 className="text-2xl md:text-4xl font-bold text-foreground">Create Your Personalized DP Banner</h1>
             <p className="text-base md:text-lg text-muted-foreground">
               Upload your photo, add your name, and download your custom Young Africa Works banner
