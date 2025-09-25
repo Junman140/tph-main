@@ -107,12 +107,12 @@ export function MainNav() {
               Prayer
             </Link>
             <Link
-              href="/blog"
+              href="/customize"
               className={`text-base font-medium transition-colors hover:text-primary ${
                 pathname === "/blog" ? "text-primary" : "text-foreground/60"
               }`}
             >
-              Blog
+              DP
             </Link>
             <Link
               href="/about"
