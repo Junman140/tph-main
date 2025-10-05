@@ -6,7 +6,7 @@ import { Search, Filter, Users, Handshake, Heart } from 'lucide-react';
 
 export default function GalleryPage() {
   const galleryItems = [
-    { id: 1, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August,26th", driveLink: "https://drive.google.com/drive/folders/1HNhZbMhhHs3DeNWlArDv2ruhJZ0VDZnX" },
+    { id: 1, image: "/gallery/fresh1.jpg", title: "SEPTEMBER 2025 MEGA SERVICE", date: "August,26th", driveLink: "https://drive.google.com/drive/folders/1E4hy9VD-WajZJ2I080B2yhCUsAfTZW7w?usp=sharing" },
     { id: 2, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August,16th", driveLink: "https://drive.google.com/drive/folders/18lZNl9EbXFV7JRxLO7NUXUCpdxQRBmhW?usp=drive_link" },
     { id: 3, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August,13th", driveLink: "https://drive.google.com/drive/folders/1BPHDgCVRIfQZiUplYOn5DdD44q5wIyH5?usp=drive_link" }, 
     { id: 4, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August 12th", driveLink: "https://drive.google.com/drive/folders/1QjMmiH9IYRBFCxHvtUU8NEBZ4BOy-xpG?usp=drive_link" },
@@ -62,7 +62,7 @@ export default function GalleryPage() {
                       <p className="text-gray-400 text-sm">{item.date}</p>
                     </div>
                     <a href={item.driveLink} target="_blank" rel="noopener noreferrer">
-                      <Button className="bg-[#BAC918] text-black rounded-full px-4 py-1 h-auto text-sm hover:bg-yellow-400">View</Button>
+                      <Button className="bg-[#1676e49a] text-black rounded-full px-4 py-1 h-auto text-sm hover:bg-slate-950">View</Button>
                     </a>
                   </div>
                 </div>
@@ -70,7 +70,7 @@ export default function GalleryPage() {
             ))}
           </div>
 
-                    <section className="mt-24 mb-16 bg-[#1E1E1E] border border-gray-800 rounded-2xl p-8 md:p-12">
+                    <section className="mt-24 mb-16 bg-[#06010ed8] border border-gray-800 rounded-2xl p-8 md:p-12">
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div>
                 <h2 className="text-4xl font-bold mb-2">Get Involved</h2>
@@ -78,7 +78,7 @@ export default function GalleryPage() {
                 <div className="space-y-6">
                   {involvementItems.map((item, index) => (
                     <div key={index} className="flex items-start gap-4">
-                      <div className="bg-[#BAC918] p-2 rounded-full text-black">
+                      <div className="bg-[#1676e49a] p-2 rounded-full text-black">
                         <item.icon size={20} />
                       </div>
                       <div>
@@ -90,7 +90,7 @@ export default function GalleryPage() {
                 </div>
               </div>
               <div className="flex items-center justify-center">
-                <img src="/assets/before-partners.png" alt="Get Involved" className="rounded-lg object-cover" />
+                <img src="/BREAKFORTH.jpg" alt="Get Involved" className="rounded-lg object-cover" />
               </div>
             </div>
              <div className="flex flex-wrap gap-4 mt-8 justify-center md:justify-start">
