@@ -6,18 +6,18 @@ import { Search, Filter, Users, Handshake, Heart } from 'lucide-react';
 
 export default function GalleryPage() {
   const galleryItems = [
-    { id: 1, image: "/gallery/Labourer service 9.jpg", title: "SEPTEMBER 2025 MEGA SERVICE", date: "August,26th", driveLink: "https://drive.google.com/drive/folders/1E4hy9VD-WajZJ2I080B2yhCUsAfTZW7w?usp=sharing" },
-    { id: 2, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August,16th", driveLink: "https://drive.google.com/drive/folders/18lZNl9EbXFV7JRxLO7NUXUCpdxQRBmhW?usp=drive_link" },
-    { id: 3, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August,13th", driveLink: "https://drive.google.com/drive/folders/1BPHDgCVRIfQZiUplYOn5DdD44q5wIyH5?usp=drive_link" }, 
-    { id: 4, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August 12th", driveLink: "https://drive.google.com/drive/folders/1QjMmiH9IYRBFCxHvtUU8NEBZ4BOy-xpG?usp=drive_link" },
-    { id: 5, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August", driveLink: "https://drive.google.com/drive/folders/1uTxPQohX0o5JLythow5Fw2Z49EZIXB85?usp=drive_link" },
-    { id: 6, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August", driveLink: "https://drive.google.com/drive/folders/1b9Ne_HJixcg0Jtq3LgpwVWEjOiK5odHG?usp=drive_link" }, 
-    { id: 7, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August", driveLink: "https://drive.google.com/drive/folders/1b9Ne_HJixcg0Jtq3LgpwVWEjOiK5odHG?usp=drive_link" },
-    { id: 8, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August", driveLink: "https://drive.google.com/drive/folders/1b9Ne_HJixcg0Jtq3LgpwVWEjOiK5odHG?usp=drive_link" },
-    { id: 9, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August", driveLink: "https://drive.google.com/drive/folders/1b9Ne_HJixcg0Jtq3LgpwVWEjOiK5odHG?usp=drive_link" },
-    { id: 10, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August", driveLink: "https://drive.google.com/drive/folders/1b9Ne_HJixcg0Jtq3LgpwVWEjOiK5odHG?usp=drive_link" },
-    { id: 11, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August", driveLink: "https://drive.google.com/drive/folders/1b9Ne_HJixcg0Jtq3LgpwVWEjOiK5odHG?usp=drive_link" },
-    { id: 12, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August", driveLink: "https://drive.google.com/drive/folders/1b9Ne_HJixcg0Jtq3LgpwVWEjOiK5odHG?usp=drive_link" },
+    { id: 1, image: "/gallery/Mega Service 22.jpgjpg", title: "SEPTEMBER 2025 MEGA SERVICE", date: "September 28th", driveLink: "https://drive.google.com/drive/folders/1E4hy9VD-WajZJ2I080B2yhCUsAfTZW7w?usp=sharing" },
+    { id: 2, image: "/gallery/Labourer.jpg", title: "Labourers Servie", date: "September 21st", driveLink: "https://drive.google.com/drive/folders/1pBKjPg997WwdgfCcd3n6uta5625t_J1y?usp=sharing" },
+    { id: 3, image: "/gallery/Thanksgiving service.jpg", title: "THANKSGIVING AND ANNIVERSARY SERVICE", date: "September 14th", driveLink: "https://drive.google.com/drive/folders/1XiXlFB1ELRzssXtUE9EEJuJLEgnmMq9t?usp=sharing" }, 
+    // { id: 4, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August 12th", driveLink: "https://drive.google.com/drive/folders/1QjMmiH9IYRBFCxHvtUU8NEBZ4BOy-xpG?usp=drive_link" },
+    // { id: 5, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August", driveLink: "https://drive.google.com/drive/folders/1uTxPQohX0o5JLythow5Fw2Z49EZIXB85?usp=drive_link" },
+    // { id: 6, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August", driveLink: "https://drive.google.com/drive/folders/1b9Ne_HJixcg0Jtq3LgpwVWEjOiK5odHG?usp=drive_link" }, 
+    // { id: 7, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August", driveLink: "https://drive.google.com/drive/folders/1b9Ne_HJixcg0Jtq3LgpwVWEjOiK5odHG?usp=drive_link" },
+    // { id: 8, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August", driveLink: "https://drive.google.com/drive/folders/1b9Ne_HJixcg0Jtq3LgpwVWEjOiK5odHG?usp=drive_link" },
+    // { id: 9, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August", driveLink: "https://drive.google.com/drive/folders/1b9Ne_HJixcg0Jtq3LgpwVWEjOiK5odHG?usp=drive_link" },
+    // { id: 10, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August", driveLink: "https://drive.google.com/drive/folders/1b9Ne_HJixcg0Jtq3LgpwVWEjOiK5odHG?usp=drive_link" },
+    // { id: 11, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August", driveLink: "https://drive.google.com/drive/folders/1b9Ne_HJixcg0Jtq3LgpwVWEjOiK5odHG?usp=drive_link" },
+    // { id: 12, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August", driveLink: "https://drive.google.com/drive/folders/1b9Ne_HJixcg0Jtq3LgpwVWEjOiK5odHG?usp=drive_link" },
   ];
 
   const involvementItems = [
