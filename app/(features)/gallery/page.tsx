@@ -6,7 +6,7 @@ import { Search, Filter, Users, Handshake, Heart } from 'lucide-react';
 
 export default function GalleryPage() {
   const galleryItems = [
-    { id: 1, image: "/gallery/fresh1.jpg", title: "SEPTEMBER 2025 MEGA SERVICE", date: "August,26th", driveLink: "https://drive.google.com/drive/folders/1E4hy9VD-WajZJ2I080B2yhCUsAfTZW7w?usp=sharing" },
+    { id: 1, image: "/gallery/Labourer service 9.jpg", title: "SEPTEMBER 2025 MEGA SERVICE", date: "August,26th", driveLink: "https://drive.google.com/drive/folders/1E4hy9VD-WajZJ2I080B2yhCUsAfTZW7w?usp=sharing" },
     { id: 2, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August,16th", driveLink: "https://drive.google.com/drive/folders/18lZNl9EbXFV7JRxLO7NUXUCpdxQRBmhW?usp=drive_link" },
     { id: 3, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August,13th", driveLink: "https://drive.google.com/drive/folders/1BPHDgCVRIfQZiUplYOn5DdD44q5wIyH5?usp=drive_link" }, 
     { id: 4, image: "/gallery/fresh1.jpg", title: "AUGUST COMMUNION SERVICE", date: "August 12th", driveLink: "https://drive.google.com/drive/folders/1QjMmiH9IYRBFCxHvtUU8NEBZ4BOy-xpG?usp=drive_link" },
