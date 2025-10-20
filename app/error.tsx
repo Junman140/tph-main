@@ -9,6 +9,7 @@ export default function GlobalError({
 }) {
   return (
     <div className="min-h-screen flex items-center justify-center p-8">
+      {void _error}
       <div className="text-center space-y-3">
         <h1 className="text-2xl font-bold">Something went wrong</h1>
         <p className="text-muted-foreground">An unexpected error occurred. Please try again.</p>
