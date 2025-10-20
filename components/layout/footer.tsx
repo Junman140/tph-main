@@ -2,14 +2,10 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Facebook, Twitter, Instagram, Youtube, ArrowUp, Mail, Phone, MapPin } from "lucide-react"
+import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin } from "lucide-react"
 import Image from "next/image"
 
 export function Footer() {
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" })
-  }
 
   return (
     <div className="bg-gray-950 text-white">
@@ -35,6 +31,8 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-white/10 p-2 sm:p-2.5 rounded-full hover:bg-primary/80 transition-colors"
+                aria-label="Facebook"
+                title="Facebook"
               >
                 <Facebook className="h-5 w-5 sm:h-6 sm:w-6" />
               </a>
@@ -43,6 +41,8 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-white/10 p-2 sm:p-2.5 rounded-full hover:bg-primary/80 transition-colors"
+                aria-label="Twitter"
+                title="Twitter"
               >
                 <Twitter className="h-5 w-5 sm:h-6 sm:w-6" />
               </a>
@@ -51,6 +51,8 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-white/10 p-2 sm:p-2.5 rounded-full hover:bg-primary/80 transition-colors"
+                aria-label="Instagram"
+                title="Instagram"
               >
                 <Instagram className="h-5 w-5 sm:h-6 sm:w-6" />
               </a>
@@ -59,6 +61,8 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-white/10 p-2 sm:p-2.5 rounded-full hover:bg-primary/80 transition-colors"
+                aria-label="YouTube"
+                title="YouTube"
               >
                 <Youtube className="h-5 w-5 sm:h-6 sm:w-6" />
               </a>

@@ -20,14 +20,14 @@ export default function TermsOfUsePage() {
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Use License</h2>
             <p>
-              Permission is granted to temporarily access the materials on The Peculiar House Global's website for personal, non-commercial use only. This is the grant of a license, not a transfer of title, and under this license you may not:
+              Permission is granted to temporarily access the materials on The Peculiar House Global&apos;s website for personal, non-commercial use only. This is the grant of a license, not a transfer of title, and under this license you may not:
             </p>
             <ul className="list-disc pl-6 mb-6">
               <li>Modify or copy the materials</li>
               <li>Use the materials for any commercial purpose or for any public display</li>
-              <li>Attempt to reverse engineer any software contained on The Peculiar House Global's website</li>
+              <li>Attempt to reverse engineer any software contained on The Peculiar House Global&apos;s website</li>
               <li>Remove any copyright or other proprietary notations from the materials</li>
-              <li>Transfer the materials to another person or "mirror" the materials on any other server</li>
+              <li>Transfer the materials to another person or &quot;mirror&quot; the materials on any other server</li>
             </ul>
             <p>
               This license shall automatically terminate if you violate any of these restrictions and may be terminated by The Peculiar House Global at any time.
@@ -59,7 +59,7 @@ export default function TermsOfUsePage() {
               <li>In any way that violates any applicable federal, state, local, or international law or regulation</li>
               <li>To transmit, or procure the sending of, any advertising or promotional material without our prior written consent</li>
               <li>To impersonate or attempt to impersonate The Peculiar House Global, a staff member, or another user</li>
-              <li>To engage in any other conduct that restricts or inhibits anyone's use or enjoyment of the website</li>
+              <li>To engage in any other conduct that restricts or inhibits anyone&apos;s use or enjoyment of the website</li>
             </ul>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Intellectual Property Rights</h2>
@@ -69,12 +69,12 @@ export default function TermsOfUsePage() {
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Disclaimer of Warranties</h2>
             <p>
-              The materials on The Peculiar House Global's website are provided on an 'as is' basis. The Peculiar House Global makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.
+              The materials on The Peculiar House Global&apos;s website are provided on an &apos;as is&apos; basis. The Peculiar House Global makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.
             </p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Limitation of Liability</h2>
             <p>
-              In no event shall The Peculiar House Global or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on The Peculiar House Global's website, even if The Peculiar House Global or a authorized representative has been notified orally or in writing of the possibility of such damage.
+              In no event shall The Peculiar House Global or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on The Peculiar House Global&apos;s website, even if The Peculiar House Global or a authorized representative has been notified orally or in writing of the possibility of such damage.
             </p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Changes to Terms of Use</h2>

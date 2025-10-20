@@ -13,9 +13,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
 type CarouselApi = UseEmblaCarouselType[1]
-type UseCarouselParameters = Parameters<typeof useEmblaCarousel>
-type CarouselOptions = UseCarouselParameters[0]
-type CarouselPlugin = UseCarouselParameters[1]
+// removed unused parameter-derived type aliases
 
 interface CarouselImage {
   src: string
@@ -25,10 +23,11 @@ interface CarouselImage {
 
 interface CarouselProps {
   images: CarouselImage[]
-  autoplayOptions?: any
+  autoplayOptions?: Parameters<typeof Autoplay>[0]
   className?: string
   showDots?: boolean
   overlay?: React.ReactNode
+  orientation?: "horizontal" | "vertical"
 }
 
 type CarouselContextProps = {
@@ -63,6 +62,7 @@ const Carousel = React.forwardRef<
       className,
       showDots = true,
       overlay,
+      orientation = "horizontal",
       ...props
     },
     ref
@@ -132,6 +132,7 @@ const Carousel = React.forwardRef<
           images,
           autoplayOptions,
           showDots,
+          orientation,
           scrollPrev,
           scrollNext,
           canScrollPrev,

@@ -5,21 +5,74 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { format } from "date-fns"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+// import { format } from "date-fns"
 import { MainNav } from "@/components/layout/main-nav"
-import { useSupabase } from "@/app/providers/supabase-provider"
+import { Upload, Save, Eye } from "lucide-react"
+import Image from "next/image"
 
 export default function BlogAdminPage() {
-  const supabase = useSupabase()
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
-  const [description, setDescription] = useState("")
+  const [excerpt, setExcerpt] = useState("")
   const [tags, setTags] = useState("")
+  const [slug, setSlug] = useState("")
+  const [customSlug, setCustomSlug] = useState(false)
+  const [featuredImage, setFeaturedImage] = useState("")
+  const [metaDescription, setMetaDescription] = useState("")
+  const [authorName, setAuthorName] = useState("")
+  const [authorImage, setAuthorImage] = useState("")
   const [isDraft, setIsDraft] = useState(false)
-  const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
+
+  // Auto-generate slug from title when title changes (if not using custom slug)
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+      .trim()
+  }
+
+  const handleTitleChange = (newTitle: string) => {
+    setTitle(newTitle)
+    if (!customSlug) {
+      setSlug(generateSlug(newTitle))
+    }
+  }
+
+  const handleImageUpload = async (file: File) => {
+    setUploadingImage(true)
+    setErrorMsg(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to upload image')
+      }
+
+      const data = await response.json()
+      setFeaturedImage(data.url)
+      setSuccessMsg('Image uploaded successfully!')
+    } catch (error) {
+      setErrorMsg((error as Error).message)
+    } finally {
+      setUploadingImage(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,107 +81,52 @@ export default function BlogAdminPage() {
     setSuccessMsg(null)
 
     try {
-      // Generate slug from title
-      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+      // Convert tags string to array
+      const tagsArray = typeof tags === 'string' 
+        ? tags.split(",").map(tag => tag.trim()).filter(Boolean)
+        : tags || [];
       
-      console.log('Attempting to create blog post with data:', {
-        title,
-        slug,
-        description,
-        isDraft
+      const response = await fetch('/api/blog', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title,
+          content,
+          excerpt: excerpt || null,
+          slug: slug || generateSlug(title),
+          tags: tagsArray,
+          published: !isDraft,
+          featuredImage: featuredImage || null,
+          metaDescription: metaDescription || null,
+          authorName: authorName || null,
+          authorImage: authorImage || null,
+          readingTime: Math.ceil(content.split(' ').length / 200) // Rough estimate of reading time
+        }),
       });
       
-      // Try direct Supabase insertion if the API fails
-      try {
-        // First try the API endpoint
-        const response = await fetch('/api/blog', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            title,
-            content,
-            description,
-            slug,
-            tags,
-            isDraft,
-            reading_time: Math.ceil(content.split(' ').length / 200) // Rough estimate of reading time
-          }),
-        });
-        
-        if (!response.ok) {
-          // Parse error response
-          let errorDetail = 'Unknown error';
-          try {
-            const errorJson = await response.json();
-            errorDetail = errorJson.error || JSON.stringify(errorJson);
-          } catch (e) {
-            // If can't parse as JSON, try as text
-            try {
-              errorDetail = await response.text();
-            } catch (textError) {
-              // If all else fails, use status code
-              errorDetail = `HTTP ${response.status}`;
-            }
-          }
-          
-          console.error('API error:', response.status, errorDetail);
-          console.log('API failed, trying direct Supabase insertion as fallback');
-          
-          // Fallback to direct Supabase insertion
-          const tagsArray = typeof tags === 'string' 
-            ? tags.split(",").map(tag => tag.trim()).filter(Boolean)
-            : tags || [];
-            
-          const { data: directData, error: directError } = await supabase
-            .from('posts')
-            .insert([
-              {
-                title,
-                content,
-                published: !isDraft,
-                slug,
-                excerpt: description, // Use description as excerpt for compatibility
-                tags: tagsArray,
-                author_id: '00000000-0000-0000-0000-000000000000', // Anonymous author ID
-                created_at: new Date().toISOString()
-              }
-            ])
-            .select()
-            .single();
-          
-          if (directError) {
-            console.error('Direct Supabase insertion error:', directError);
-            throw new Error(`Failed to create post: ${directError.message}`);
-          }
-          
-          console.log('Post created successfully via direct Supabase:', directData);
-          
-          // Reset form
-          setTitle("")
-          setContent("")
-          setDescription("")
-          setTags("")
-          setIsDraft(false)
-          setSuccessMsg('Post created successfully via direct database insertion!')
-          return;
-        }
-        
-        const data = await response.json();
-        console.log('Post created successfully via API:', data);
-        
-        // Reset form
-        setTitle("")
-        setContent("")
-        setDescription("")
-        setTags("")
-        setIsDraft(false)
-        setSuccessMsg('Post created successfully!')
-      } catch (apiError) {
-        console.error('API method failed:', apiError);
-        throw apiError; // Re-throw to be caught by the outer catch
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create post');
       }
+      
+      const data = await response.json();
+      console.log('Post created successfully:', data);
+      
+      // Reset form
+      setTitle("")
+      setContent("")
+      setExcerpt("")
+      setTags("")
+      setSlug("")
+      setCustomSlug(false)
+      setFeaturedImage("")
+      setMetaDescription("")
+      setAuthorName("")
+      setAuthorImage("")
+      setIsDraft(false)
+      setSuccessMsg('Post created successfully!')
     } catch (error) {
       setErrorMsg((error as Error).message)
       console.error('Error creating post:', error)
@@ -144,72 +142,191 @@ export default function BlogAdminPage() {
         <div className="container mx-auto px-4 max-w-4xl">
           <Card>
             <CardHeader>
-              <CardTitle>Create New Blog Post</CardTitle>
+              <CardTitle className="flex items-center">
+                <Save className="mr-2 h-5 w-5" />
+                Create New Blog Post
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {errorMsg && (
-                <div className="mb-4 text-red-500 font-bold">Error: {errorMsg}</div>
+                <Alert variant="destructive" className="mb-4">
+                  <AlertDescription>{errorMsg}</AlertDescription>
+                </Alert>
               )}
               {successMsg && (
-                <div className="mb-4 text-green-600 font-bold">{successMsg}</div>
+                <Alert className="mb-4">
+                  <AlertDescription>{successMsg}</AlertDescription>
+                </Alert>
               )}
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Title</label>
+              
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Title */}
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title *</Label>
                   <Input
+                    id="title"
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={(e) => handleTitleChange(e.target.value)}
                     required
                     placeholder="Enter post title"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Description</label>
+                {/* Slug */}
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="customSlug"
+                      checked={customSlug}
+                      onCheckedChange={setCustomSlug}
+                    />
+                    <Label htmlFor="customSlug">Use custom slug</Label>
+                  </div>
                   <Input
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    required
-                    placeholder="Enter post description"
+                    value={slug}
+                    onChange={(e) => setSlug(e.target.value)}
+                    placeholder={customSlug ? "Enter custom slug" : "Auto-generated slug"}
+                    disabled={!customSlug}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {customSlug 
+                      ? "Enter a custom URL slug for this post" 
+                      : "Slug will be auto-generated from the title"
+                    }
+                  </p>
+                </div>
+
+                {/* Excerpt */}
+                <div className="space-y-2">
+                  <Label htmlFor="excerpt">Excerpt</Label>
+                  <Textarea
+                    id="excerpt"
+                    value={excerpt}
+                    onChange={(e) => setExcerpt(e.target.value)}
+                    placeholder="Brief description of the post (optional)"
+                    rows={3}
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Content</label>
+                {/* Meta Description */}
+                <div className="space-y-2">
+                  <Label htmlFor="metaDescription">Meta Description</Label>
                   <Textarea
+                    id="metaDescription"
+                    value={metaDescription}
+                    onChange={(e) => setMetaDescription(e.target.value)}
+                    placeholder="SEO meta description (optional)"
+                    rows={2}
+                  />
+                </div>
+
+                {/* Featured Image */}
+                <div className="space-y-2">
+                  <Label htmlFor="featuredImage">Featured Image</Label>
+                  <div className="flex space-x-2">
+                    <Input
+                      id="featuredImage"
+                      value={featuredImage}
+                      onChange={(e) => setFeaturedImage(e.target.value)}
+                      placeholder="Image URL or upload a file"
+                    />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      title="Upload featured image"
+                      aria-label="Upload featured image"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) handleImageUpload(file)
+                      }}
+                      className="hidden"
+                      id="imageUpload"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => document.getElementById('imageUpload')?.click()}
+                      disabled={uploadingImage}
+                    >
+                      {uploadingImage ? (
+                        <Upload className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Upload className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  {featuredImage && (
+                    <div className="mt-2 relative w-32 h-20">
+                      <Image src={featuredImage} alt="Featured image preview" fill className="object-cover rounded border" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Author Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="authorName">Author Name</Label>
+                    <Input
+                      id="authorName"
+                      value={authorName}
+                      onChange={(e) => setAuthorName(e.target.value)}
+                      placeholder="Author name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="authorImage">Author Image URL</Label>
+                    <Input
+                      id="authorImage"
+                      value={authorImage}
+                      onChange={(e) => setAuthorImage(e.target.value)}
+                      placeholder="Author image URL"
+                    />
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="space-y-2">
+                  <Label htmlFor="content">Content *</Label>
+                  <Textarea
+                    id="content"
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     required
                     placeholder="Write your post content here..."
-                    className="min-h-[200px]"
+                    className="min-h-[300px]"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Tags (comma-separated)</label>
+                {/* Tags */}
+                <div className="space-y-2">
+                  <Label htmlFor="tags">Tags</Label>
                   <Input
+                    id="tags"
                     value={tags}
                     onChange={(e) => setTags(e.target.value)}
-                    placeholder="e.g. prayer, faith, community"
+                    placeholder="e.g. prayer, faith, community (comma-separated)"
                   />
                 </div>
 
+                {/* Draft Toggle */}
                 <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
+                  <Switch
                     id="isDraft"
                     checked={isDraft}
-                    onChange={(e) => setIsDraft(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    onCheckedChange={setIsDraft}
                   />
-                  <label htmlFor="isDraft" className="text-sm font-medium text-gray-700">
-                    Save as draft (unpublished)
-                  </label>
+                  <Label htmlFor="isDraft">Save as draft (unpublished)</Label>
                 </div>
 
-                <Button type="submit" disabled={loading}>
-                  {loading ? "Creating..." : "Create Post"}
-                </Button>
+                <div className="flex justify-end space-x-2">
+                  <Button type="button" variant="outline">
+                    <Eye className="mr-2 h-4 w-4" />
+                    Preview
+                  </Button>
+                  <Button type="submit" disabled={loading}>
+                    {loading ? "Creating..." : "Create Post"}
+                  </Button>
+                </div>
               </form>
             </CardContent>
           </Card>

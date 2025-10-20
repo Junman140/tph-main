@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from 'react'
-import { useSupabase } from '@/app/providers/supabase-provider'
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -21,7 +20,6 @@ export function RegistrationForm({ eventId, eventTitle, isOpen, onClose }: Regis
   const [email, setEmail] = useState('')
   const [notes, setNotes] = useState('')
   const { toast } = useToast()
-  const supabase = useSupabase()
 
   const handleSubmit = async () => {
     try {
@@ -36,35 +34,26 @@ export function RegistrationForm({ eventId, eventTitle, isOpen, onClose }: Regis
         return
       }
 
-      // Check if already registered with this email
-      const { data: existing } = await supabase
-        .from('event_registrations')
-        .select()
-        .eq('event_id', eventId)
-        .eq('email', email)
-        .single()
-
-      if (existing) {
-        toast({
-          title: "Already registered",
-          description: "This email has already been registered for this event",
-          variant: "destructive"
-        })
-        return
-      }
-
-      // Submit the registration
-      const { error } = await supabase
-        .from('event_registrations')
-        .insert({
-          event_id: eventId,
-          full_name: fullName,
-          email: email,
+      // Submit the registration using API route
+      const response = await fetch('/api/events/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          eventId,
+          fullName,
+          email,
           notes: notes.trim(),
-          status: 'registered'
-        })
+          location: '', // Add location field if needed
+          phoneNumber: '' // Add phone field if needed
+        }),
+      })
 
-      if (error) throw error
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to register for event')
+      }
 
       toast({
         title: "Success!",

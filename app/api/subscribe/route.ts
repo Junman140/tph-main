@@ -1,57 +1,46 @@
 import { NextResponse } from 'next/server';
-import { createClient } from "@supabase/supabase-js";
+import { prisma } from '@/lib/prisma';
 import * as z from 'zod';
-
-// Initialize Supabase admin client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseServiceRoleKey) {
-  console.error("API Route Error: Supabase URL or Service Role Key missing.");
-}
-
-const supabaseAdmin = supabaseUrl && supabaseServiceRoleKey
-  ? createClient(supabaseUrl, supabaseServiceRoleKey, {
-      auth: { persistSession: false }
-    })
-  : null;
 
 const subscribeSchema = z.object({
   email: z.string().email("Invalid email address."),
   name: z.string().optional(),
 });
 
-export async function POST(req: Request) {
-  if (!supabaseAdmin) {
-    return NextResponse.json({ error: "Server configuration error." }, { status: 500 });
+// GET endpoint to fetch all subscriptions (for admin dashboard)
+export async function GET() {
+  try {
+    const subscriptions = await prisma.subscription.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    
+    return NextResponse.json(subscriptions);
+  } catch (error) {
+    console.error("Get subscriptions error:", error);
+    return NextResponse.json({ error: "Failed to fetch subscriptions" }, { status: 500 });
   }
+}
 
+export async function POST(req: Request) {
   try {
     const json = await req.json();
     const { email, name } = subscribeSchema.parse(json);
 
-    // Upsert subscriber (adds if not exists, updates status if exists)
-    const { data, error } = await supabaseAdmin
-      .from('subscribers')
-      .upsert(
-        {
-          email: email,
-          name: name,
-          status: 'subscribed',
-          subscription_date: new Date().toISOString(), // Use subscription_date as created/updated timestamp
-        },
-        { onConflict: 'email' } // Use email as the conflict target
-      )
-      .select('id')
-      .single();
+    // Upsert subscriber using Prisma
+    const subscription = await prisma.subscription.upsert({
+      where: { email },
+      update: {
+        isActive: true,
+        name: name || undefined,
+      },
+      create: {
+        email,
+        name: name || undefined,
+        isActive: true,
+      },
+    });
 
-    if (error) {
-      console.error("Supabase subscribe error:", error);
-      // Check for specific errors if needed
-      return NextResponse.json({ error: "Failed to subscribe.", details: error.message }, { status: 500 });
-    }
-
-    console.log("Subscription successful:", data?.id);
+    console.log("Subscription successful:", subscription.id);
     return NextResponse.json({ success: true, message: "Successfully subscribed!" });
 
   } catch (error) {
@@ -63,36 +52,25 @@ export async function POST(req: Request) {
   }
 }
 
-// Optional: Implement PUT/PATCH for unsubscribe or GET for admin fetching
-// Example Unsubscribe (using PUT with email in body)
+// Unsubscribe endpoint
 export async function PUT(req: Request) {
-  if (!supabaseAdmin) {
-    return NextResponse.json({ error: "Server configuration error." }, { status: 500 });
-  }
-
   try {
     const json = await req.json();
-    // Simple email validation for unsubscribe
     const { email } = z.object({ email: z.string().email() }).parse(json);
 
-    const { error } = await supabaseAdmin
-      .from('subscribers')
-      .update({ status: 'unsubscribed' })
-      .eq('email', email);
+    const subscription = await prisma.subscription.updateMany({
+      where: { email },
+      data: { isActive: false },
+    });
 
-    if (error) {
-      console.error("Supabase unsubscribe error:", error);
-      // Handle 'not found' differently? PGRST116 means 0 rows updated.
-      if (error.code === 'PGRST116') {
-         return NextResponse.json({ success: true, message: "Email not found or already unsubscribed." });
-      }
-      return NextResponse.json({ error: "Failed to unsubscribe.", details: error.message }, { status: 500 });
+    if (subscription.count === 0) {
+      return NextResponse.json({ success: true, message: "Email not found or already unsubscribed." });
     }
 
     return NextResponse.json({ success: true, message: "Successfully unsubscribed." });
 
   } catch (error) {
-     if (error instanceof z.ZodError) {
+    if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid input.", details: error.errors }, { status: 400 });
     }
     console.error("Unsubscribe API error:", error);

@@ -40,11 +40,8 @@ export function MainNav() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
-  const { theme } = useTheme()
-  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 0)
     }
@@ -91,20 +88,12 @@ export function MainNav() {
               Gallery
             </Link>
             <Link
-              href="/bible"
+              href="/pastors"
               className={`text-base font-medium transition-colors hover:text-primary ${
-                pathname === "/bible" ? "text-primary" : "text-foreground/60"
+                pathname === "/pastors" ? "text-primary" : "text-foreground/60"
               }`}
             >
-              Bible
-            </Link>
-            <Link
-              href="/prayer"
-              className={`text-base font-medium transition-colors hover:text-primary ${
-                pathname === "/prayer" ? "text-primary" : "text-foreground/60"
-              }`}
-            >
-              Prayer
+              Pastors
             </Link>
             <Link
               href="/customize"
@@ -191,22 +180,13 @@ export function MainNav() {
                         Gallery
                       </Link>
                       <Link
-                        href="/bible"
-                        className={`text-lg font-medium hover:text-primary ${
-                          pathname === "/bible" ? "text-primary" : "text-foreground/60"
-                        }`}
-                        onClick={() => setIsOpen(false)}
-                      >
-                        Bible
-                      </Link>
-                      <Link
                         href="/prayer"
                         className={`text-lg font-medium hover:text-primary ${
                           pathname === "/prayer" ? "text-primary" : "text-foreground/60"
                         }`}
                         onClick={() => setIsOpen(false)}
                       >
-                        Prayer
+                        Pastors
                       </Link>
                       <Link
                         href="/customize"

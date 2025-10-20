@@ -1,4 +1,4 @@
-import { parse, format } from "date-fns"
+import { parse } from "date-fns"
 
 export interface Event {
   id: string

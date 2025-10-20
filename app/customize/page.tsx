@@ -6,13 +6,13 @@ import { useState, useRef, useCallback, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Upload, Download, User, ImageIcon, ArrowLeft } from "lucide-react"
-import Link from "next/link"
+import { Upload, Download, User, ImageIcon } from "lucide-react"
+import NextImage from "next/image"
 
 export default function DPBannerCustomizer() {
   const [userName, setUserName] = useState("")
   const [userImage, setUserImage] = useState<string | null>(null)
-  const [isGenerating, setIsGenerating] = useState(false)
+  // removed unused isGenerating state
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -30,7 +30,7 @@ export default function DPBannerCustomizer() {
   const generateBanner = useCallback(async () => {
     if (!canvasRef.current || !userImage || !userName.trim()) return
 
-    setIsGenerating(true)
+    // start generation
     const canvas = canvasRef.current
     const ctx = canvas.getContext("2d")
     if (!ctx) return
@@ -124,7 +124,7 @@ export default function DPBannerCustomizer() {
     } catch (error) {
       console.error("Error generating banner:", error)
     } finally {
-      setIsGenerating(false)
+      // end generation
     }
   }, [userImage, userName])
 
@@ -179,11 +179,9 @@ export default function DPBannerCustomizer() {
                   >
                     {userImage ? (
                       <div className="space-y-4">
-                        <img
-                          src={userImage || "/placeholder.svg"}
-                          alt="Uploaded"
-                          className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-lg mx-auto"
-                        />
+                        <div className="relative w-24 h-24 md:w-32 md:h-32 mx-auto">
+                          <NextImage src={userImage || "/placeholder.svg"} alt="Uploaded" fill className="object-cover rounded-lg" />
+                        </div>
                         <p className="text-sm text-muted-foreground">Click to change photo</p>
                       </div>
                     ) : (
@@ -239,8 +237,7 @@ export default function DPBannerCustomizer() {
                   <div className="relative">
                     <canvas
                       ref={canvasRef}
-                      className="w-full max-w-sm md:max-w-md mx-auto border border-border rounded-lg"
-                      style={{ aspectRatio: "1080/1350" }}
+                      className="w-full max-w-sm md:max-w-md mx-auto border border-border rounded-lg [aspect-ratio:1080/1350]"
                     />
                     {(!userImage || !userName.trim()) && (
                       <div className="absolute inset-0 flex items-center justify-center bg-muted/50 rounded-lg">

@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -30,7 +29,8 @@ const formSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
   phoneNumber: z.string().min(10, "Please enter a valid phone number"),
-  eventId: z.string().uuid("Invalid event ID"),
+  location: z.string().min(2, "Location is required"),
+  notes: z.string().optional(),
 });
 
 export function RegistrationForm({ eventId, eventTitle }: { eventId: string; eventTitle: string }) {
@@ -38,7 +38,6 @@ export function RegistrationForm({ eventId, eventTitle }: { eventId: string; eve
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const supabase = useSupabaseClient();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -46,47 +45,30 @@ export function RegistrationForm({ eventId, eventTitle }: { eventId: string; eve
       fullName: "",
       email: "",
       phoneNumber: "",
-      eventId: eventId,
+      location: "",
+      notes: "",
     },
   });
 
-  useEffect(() => {
-    form.reset({
-      fullName: "",
-      email: "",
-      phoneNumber: "",
-      eventId: eventId,
-      });
-  }, [eventId, form]);
-
-    return (
-      <Button variant="outline" className="w-full" disabled>
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        Loading...
-      </Button>
-    );
-  };
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!supabase) {
-      toast({ title: "Database Error", description: "Could not connect to the database.", variant: "destructive" });
-      return;
-    }
-
     try {
       setIsSubmitting(true);
 
-      const { data, error } = await supabase
-        .from('event_registrations')
-        .insert({
-          event_id: values.eventId,
-          user_id: 'anonymous',
-          status: 'registered',
-        })
-        .select()
-        .single();
+      const response = await fetch('/api/events/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          eventId,
+          ...values,
+        }),
+      });
 
-      if (error) {
-        if (error.code === '23505') {
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 409) {
           toast({
             title: "Already Registered",
             description: "You are already registered for this event.",
@@ -98,10 +80,11 @@ export function RegistrationForm({ eventId, eventTitle }: { eventId: string; eve
             setIsOpen(false);
             setShowSuccess(false);
           }, 3000);
-        } else {
-          throw error;
+          return;
         }
-      } else if (data) {
+        throw new Error(data.error || 'Registration failed');
+      }
+
         setShowSuccess(true);
         form.reset();
         toast({
@@ -112,14 +95,12 @@ export function RegistrationForm({ eventId, eventTitle }: { eventId: string; eve
           setIsOpen(false);
           setShowSuccess(false);
         }, 3000);
-      } else {
-        throw new Error("Registration data was unexpectedly null");
-      }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Registration failed:", error);
+      const message = error instanceof Error ? error.message : "There was an error processing your registration. Please try again.";
       toast({
         title: "Registration Failed",
-        description: error.message || "There was an error processing your registration. Please try again.",
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -138,7 +119,7 @@ export function RegistrationForm({ eventId, eventTitle }: { eventId: string; eve
         <DialogHeader>
           <DialogTitle>Register for {eventTitle}</DialogTitle>
           <DialogDescription>
-            Fill out the form below to register for this event. We'll send you a confirmation email with more details.
+            Fill out the form below to register for this event. We&apos;ll send you a confirmation email with more details.
           </DialogDescription>
         </DialogHeader>
         {showSuccess ? (
@@ -146,7 +127,7 @@ export function RegistrationForm({ eventId, eventTitle }: { eventId: string; eve
             <CheckCircle2 className="h-16 w-16 text-green-500 mb-4" />
             <h3 className="text-xl font-semibold mb-2">Registration Successful!</h3>
             <p className="text-muted-foreground text-center">
-              Thank you for registering. We'll send you more details about the event soon.
+              Thank you for registering. We&apos;ll send you more details about the event soon.
             </p>
           </div>
         ) : (
@@ -159,7 +140,7 @@ export function RegistrationForm({ eventId, eventTitle }: { eventId: string; eve
                   <FormItem>
                     <FormLabel>Full Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your full name" {...field} disabled={!!user?.fullName} />
+                      <Input placeholder="Enter your full name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -172,7 +153,7 @@ export function RegistrationForm({ eventId, eventTitle }: { eventId: string; eve
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="Enter your email" {...field} disabled={!!user?.primaryEmailAddress?.emailAddress} />
+                      <Input type="email" placeholder="Enter your email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -185,7 +166,33 @@ export function RegistrationForm({ eventId, eventTitle }: { eventId: string; eve
                   <FormItem>
                     <FormLabel>Phone Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your phone number" {...field} disabled={!!user?.primaryPhoneNumber?.phoneNumber} />
+                      <Input placeholder="Enter your phone number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Location</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter your location" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Additional Notes (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Any additional information" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -208,11 +215,3 @@ export function RegistrationForm({ eventId, eventTitle }: { eventId: string; eve
     </Dialog>
   );
 } 
-
-function setIsOpen(arg0: boolean) {
-  throw new Error("Function not implemented.");
-}
-function setShowSuccess(arg0: boolean) {
-  throw new Error("Function not implemented.");
-}
-

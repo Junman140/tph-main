@@ -1,15 +1,13 @@
 "use client"
 
 import { useEffect, useState } from 'react'
-import { compareDesc } from 'date-fns'
-import { Button } from "@/components/ui/button"
+// import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { format } from "date-fns"
 import Link from "next/link"
 import { Search } from "lucide-react"
 import { MainNav } from "@/components/layout/main-nav"
-import { useSupabase } from "@/app/providers/supabase-provider"
 
 type Post = {
   id: string
@@ -17,51 +15,41 @@ type Post = {
   content?: string
   excerpt?: string
   slug: string
-  created_at?: string
-  date?: string
-  reading_time?: number
-  description?: string
+  createdAt: string
+  readingTime?: number
   published?: boolean
   tags: string[]
 }
 
 export default function BlogPage() {
-  const supabase = useSupabase()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
-  const [fetchError, setFetchError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        let query = supabase
-          .from('posts')
-          .select('id, title, slug, content, excerpt, created_at, tags, published')
-          .eq('published', true)
-          .order('created_at', { ascending: false })
+        const response = await fetch('/api/blog?published=true')
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
 
+        const data = await response.json()
+        
+        // Filter posts based on search query
+        let filteredPosts = data
         if (searchQuery) {
-          query = query.or(`title.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%`)
+          filteredPosts = data.filter((post: Post) => 
+            post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            post.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            post.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
+          )
         }
 
-        const { data, error } = await query
-
-        if (error) {
-          setFetchError(error.message || 'Unknown error')
-          console.error('Supabase error fetching posts:', error)
-          return
-        }
-
-        if (!data) {
-          setFetchError('No data returned from Supabase')
-          return
-        }
-
-        setPosts(data)
+        setPosts(filteredPosts)
       } catch (err) {
-        setFetchError((err as Error).message)
-        console.error('Unexpected error fetching posts:', err)
+        console.error('Error fetching posts:', err)
       } finally {
         setLoading(false)
       }
@@ -125,12 +113,12 @@ export default function BlogPage() {
                       <CardHeader>
                         <CardTitle>{post.title}</CardTitle>
                         <CardDescription>
-                          {format(new Date(post.created_at || ''), "MMMM d, yyyy")}
+                          {format(new Date(post.createdAt), "MMMM d, yyyy")}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
                         <p className="text-muted-foreground">
-                          {post.excerpt || (post.content && post.content.substring(0, 150)) || post.description || ''}...
+                          {(post.excerpt || (post.content && post.content.substring(0, 150)) || '') + '...'}
                         </p>
                         {post.tags && post.tags.length > 0 && (
                           <div className="mt-4 flex flex-wrap gap-2">

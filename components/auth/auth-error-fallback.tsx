@@ -20,7 +20,7 @@ export function AuthErrorFallback() {
     <div className="fixed bottom-4 left-4 md:left-auto md:right-4 bg-amber-50 border border-amber-200 text-amber-800 p-3 sm:p-4 rounded-md shadow-md w-[calc(100%-2rem)] max-w-md mx-auto md:mx-0">
       <h3 className="font-medium mb-1 text-sm sm:text-base">Authentication Notice</h3>
       <p className="text-xs sm:text-sm">
-        We're experiencing some connectivity issues with our authentication service. 
+        We&apos;re experiencing some connectivity issues with our authentication service. 
         You can continue browsing, but some features may be limited.
       </p>
       <button 

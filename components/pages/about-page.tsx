@@ -19,7 +19,7 @@ export default function AboutPage() {
               <CardContent className="p-6">
                 <h2 className="text-2xl font-semibold mb-4">Our Vision</h2>
                 <p className="text-muted-foreground">
-                  TPH Global aims at raising "Kingdom generals" through principles of
+                  TPH Global aims at raising &quot;Kingdom generals&quot; through principles of
                   loyalty, holiness, and Anakazo empowerment.
                 </p>
               </CardContent>
@@ -45,7 +45,7 @@ export default function AboutPage() {
                 <Shield className="h-8 w-8 text-primary mb-4" />
                 <h3 className="font-semibold mb-2">Loyalty</h3>
                 <p className="text-sm text-muted-foreground">
-                  Encouraging faithful commitment to spiritual principles and unwavering dedication to God's kingdom.
+                  Encouraging faithful commitment to spiritual principles and unwavering dedication to God&apos;s kingdom.
                 </p>
               </CardContent>
             </Card>

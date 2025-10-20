@@ -15,7 +15,7 @@ export default function PrivacyPolicyPage() {
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Introduction</h2>
             <p>
-              The Peculiar House Global ("we," "our," or "us") respects your privacy and is committed to protecting your personal data. 
+              The Peculiar House Global (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) respects your privacy and is committed to protecting your personal data. 
               This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website 
               and use our services.
             </p>
@@ -65,14 +65,14 @@ export default function PrivacyPolicyPage() {
               <li>Objection to processing of your personal information</li>
             </ul>
             
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Children's Privacy</h2>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">Children&apos;s Privacy</h2>
             <p>
               Our services are not intended for individuals under the age of 13. We do not knowingly collect personal information from children under 13. If you are a parent or guardian and believe your child has provided us with personal information, please contact us.
             </p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Changes to This Privacy Policy</h2>
             <p>
-              We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date.
+              We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the &quot;Last Updated&quot; date.
             </p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Contact Us</h2>

@@ -2,41 +2,38 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
-import { motion } from "framer-motion"
+import { motion, useScroll, useTransform, type Variants } from "framer-motion"
 import useEmblaCarousel from "embla-carousel-react"
 import Autoplay from "embla-carousel-autoplay"
-import { ArrowRight, Calendar, Users, Video, Heart, ChevronDown, Play, User, MapPin, Clock, Headphones } from "lucide-react"
+import { ArrowRight, Calendar, MapPin, Clock, Headphones } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MainNav } from "@/components/layout/main-nav"
-import { format, formatDistanceToNow, formatDistance } from "date-fns"
+import { format, formatDistance } from "date-fns"
 import Image from "next/image"
-import { useSupabase } from "@/app/providers/supabase-provider"
 import { useQuery } from "@tanstack/react-query"
 import { Skeleton } from "@/components/ui/skeleton"
 
-const carouselImages = [
-  {
-    src: "/gallery/daddy5.jpg",
-    alt: "Sunday Worship Service",
-    description: "Experience the power of worship together",
-  },
-  {
-    src: "/gallery/daddy5.jpg",
-    alt: "Community Fellowship",
-    description: "Growing together in faith and love",
-  },
-  {
-    src: "/gallery/daddy5.jpg",
-    alt: "Youth Ministry",
-    description: "Empowering the next generation",
-  },
-]
+// Animation variants
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 24 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } }
+}
+
+const staggerContainer: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.12, delayChildren: 0.08 } }
+}
+
+const imageReveal: Variants = {
+  hidden: { opacity: 0, scale: 1.04 },
+  show: { opacity: 1, scale: 1, transition: { duration: 0.7, ease: 'easeOut' } }
+}
+
+// removed unused carouselImages
 
 // Blog posts are loaded from the database
-
-import { getFeaturedEvents, type Event } from "@/lib/events-data"
 
 const TESTIMONIALS = [
   {
@@ -151,6 +148,187 @@ function SermonSkeleton() {
   )
 }
 
+// Home Pastors subsection
+function HomePastors() {
+  const { data: pastors, isLoading, error } = useQuery({
+    queryKey: ['pastors-home'],
+    queryFn: async () => {
+      const res = await fetch('/api/pastors?active=true')
+      if (!res.ok) throw new Error('Failed to fetch pastors')
+      return res.json()
+    }
+  })
+
+  if (isLoading) return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {[0,1].map(i => (
+        <Card key={i} className="overflow-hidden">
+          <div className="relative aspect-[4/3]">
+            <Skeleton className="w-full h-full" />
+          </div>
+          <CardContent className="p-6">
+            <Skeleton className="h-6 w-1/2 mb-2" />
+            <Skeleton className="h-4 w-1/3 mb-4" />
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-5/6" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  )
+
+  if (error || !pastors) return null
+
+  interface PastorItem {
+    id: string
+    imageUrl: string
+    altText?: string | null
+    name: string
+    isSenior?: boolean
+    title?: string
+    bio?: string
+  }
+
+  const items = (pastors as PastorItem[]).slice(0, 4)
+
+  return (
+    <div className="space-y-12">
+      {items.map((p, index) => (
+        <div key={p.id} className={`grid grid-cols-1 md:grid-cols-2 gap-8 items-center ${index % 2 === 1 ? 'md:[&>*:first-child]:order-2' : ''}`}>
+          <div className="relative aspect-[4/3] w-full">
+            <Image src={p.imageUrl} alt={p.altText || p.name} fill className="object-cover rounded-lg" />
+          </div>
+          <div>
+            {p.isSenior && <Badge className="mb-2">Senior Pastor</Badge>}
+            <h3 className="text-2xl font-semibold">{p.name}</h3>
+            <p className="text-muted-foreground mb-3">{p.title}</p>
+            <p className="leading-relaxed line-clamp-5">{p.bio}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Component to fetch and display featured events from database
+function FeaturedEvents() {
+  interface EventItem {
+    id: string
+    title: string
+    description?: string | null
+    date: string
+    imageUrl?: string | null
+    altText?: string | null
+    location?: string | null
+    isActive?: boolean
+    registrationFormFields?: { type?: string; time?: string } | null
+  }
+
+  const { data: events, isLoading, error } = useQuery<EventItem[]>({
+    queryKey: ['events'],
+    queryFn: async () => {
+      const response = await fetch('/api/events')
+      if (!response.ok) throw new Error('Failed to fetch events')
+      return response.json() as Promise<EventItem[]>
+    },
+  })
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <Card key={index} className="h-full">
+            <div className="aspect-video">
+              <Skeleton className="w-full h-full" />
+            </div>
+            <CardContent className="p-6">
+              <Skeleton className="h-6 w-3/4 mb-2" />
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-5/6" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+
+  if (error || !events) {
+    return (
+      <div className="text-center p-8 bg-red-50 rounded-lg text-red-600">
+        <p>Unable to load events at this time. Please check back later.</p>
+      </div>
+    )
+  }
+
+  const featuredEvents = events
+    .filter((event: EventItem) => event.isActive)
+    .slice(0, 3) // Show only first 3 events
+
+  if (featuredEvents.length === 0) {
+    return (
+      <div className="text-center p-8 bg-yellow-50 rounded-lg text-yellow-600">
+        <p>No events scheduled at this time. Check back soon for upcoming events.</p>
+      </div>
+    )
+  }
+
+  return (
+    <motion.div
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      variants={staggerContainer}
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, amount: 0.2 }}
+    >
+      {featuredEvents.map((event: EventItem) => {
+        const eventDate = new Date(event.date)
+        const eventType = event.registrationFormFields?.type || 'Event'
+        const eventTime = event.registrationFormFields?.time || ''
+
+        return (
+          <motion.div
+            key={event.id}
+            variants={fadeUp}
+          >
+            <Card className="h-full">
+              <motion.div className="aspect-video relative" variants={imageReveal}>
+                <Image src={event.imageUrl || '/events/bg.jpeg'} alt={event.altText || event.title} fill className="object-cover rounded-t-lg" />
+                <div className="absolute top-4 right-4">
+                  <Badge>{eventType}</Badge>
+                </div>
+              </motion.div>
+              <CardContent className="p-6">
+                <h3 className="text-xl font-semibold mb-2">{event.title}</h3>
+                <p className="text-muted-foreground text-sm mb-4">
+                  {event.description}
+                </p>
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p className="flex items-center">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    {format(eventDate, 'EEEE, MMMM do, yyyy')}
+                  </p>
+                  {eventTime && (
+                    <p className="flex items-center">
+                      <Clock className="h-4 w-4 mr-2" />
+                      {eventTime}
+                    </p>
+                  )}
+                  {event.location && (
+                    <p className="flex items-center">
+                      <MapPin className="h-4 w-4 mr-2" />
+                      {event.location}
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )
+      })}
+    </motion.div>
+  )
+}
+
 // Component to fetch and display sermons on the homepage
 function HomepageSermons() {
   // Fetch sermons data using React Query
@@ -192,18 +370,19 @@ function HomepageSermons() {
   const homepageSermons = sermons.slice(0, 4)
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {homepageSermons.map((sermon, index) => (
-        <motion.div
-          key={sermon.id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: index * 0.1 }}
-        >
+    <motion.div
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+      variants={staggerContainer}
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, amount: 0.2 }}
+    >
+      {homepageSermons.map((sermon) => (
+        <motion.div key={sermon.id} variants={fadeUp}>
           <SermonCard sermon={sermon} />
         </motion.div>
       ))}
-    </div>
+    </motion.div>
   )
 }
 
@@ -261,31 +440,7 @@ function CarouselDots({ selectedIndex, length, onClick }: { selectedIndex: numbe
   )
 }
 
-interface Post {
-  id: string;
-  title: string;
-  content: string;
-  excerpt?: string;
-  slug: string;
-  users?: {
-    name: string;
-  };
-  created_at: string;
-  published: boolean;
-}
-
-type PostResponse = {
-  id: string;
-  title: string;
-  content: string;
-  excerpt: string | null;
-  slug: string;
-  created_at: string;
-  published: boolean;
-  users: {
-    name: string;
-  } | null;
-}
+// removed unused Post and PostResponse types
 
 const BlogSection = () => {
   return (
@@ -321,6 +476,8 @@ const BlogSection = () => {
 export default function HomePage() {
   const [currentTestimonial, setCurrentTestimonial] = useState(0)
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay()])
+  const { scrollYProgress } = useScroll()
+  const heroY = useTransform(scrollYProgress, [0, 0.3], [0, -40])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -331,7 +488,7 @@ export default function HomePage() {
 
   const scrollTo = useCallback(
     (index: number) => {
-      emblaApi && emblaApi.scrollTo(index)
+      if (emblaApi) emblaApi.scrollTo(index)
     },
     [emblaApi]
   )
@@ -346,60 +503,55 @@ export default function HomePage() {
     })
   }, [emblaApi])
 
-  const rootNode = useCallback((emblaRoot: any) => {
-    if (emblaRoot) {
-      emblaRef(emblaRoot)
-    }
-  }, [emblaRef])
-
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id)
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" })
-    }
-  }
+  // removed unused helpers rootNode and scrollToSection
 
   return (
     <div className="min-h-screen bg-background">
       <MainNav />
 
       <main className="flex-grow">
-        {/* Hero Section */}
+        {/* Hero Section with Video */}
         <section className="relative h-[80vh] min-h-[600px] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 z-0">
-            <Image
-              src="/gallery/colabourers.png"
-              alt="TPH Global"
-              fill
-              className="object-cover brightness-50"
-              priority
-            />
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="w-full h-full object-cover"
+            >
+              <source src="/tphh.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+            <div className="absolute inset-0 bg-black/50"></div>
           </div>
-          <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Step Into Your Destiny
-            </h1>
-            <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto">
-              The Birth Place of Generals
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                size="lg" 
-                variant="secondary"
-                className="bg-white hover:bg-white/90 text-primary hover:text-primary/90"
-                asChild
-              >
-                <Link href="/about">Learn More About Us</Link>
-              </Button>
-              <Button 
-                size="lg" 
-                variant="secondary"
-                className="bg-white/10 hover:bg-white/20 text-white border-white/20"
-                asChild
-              >
-                <Link href="/sermons">Listen to Sermons</Link>
-              </Button>
-            </div>
+          <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-start">
+            <motion.div style={{ y: heroY }} className="max-w-2xl text-left text-white" initial="hidden" animate="show" variants={staggerContainer}>
+              <motion.h1 variants={fadeUp} className="text-4xl md:text-6xl font-bold mb-6">
+                THE PECULIAR HOUSE GLOBAL
+              </motion.h1>
+              <motion.p variants={fadeUp} className="text-lg md:text-xl mb-8">
+                The Birth Place of Generals
+              </motion.p>
+              <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 justify-start">
+                <Button 
+                  size="lg" 
+                  variant="secondary"
+                  className="bg-white hover:bg-white/90 text-primary hover:text-primary/90"
+                  asChild
+                >
+                  <Link href="/about">Learn More About Us</Link>
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="secondary"
+                  className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+                  asChild
+                >
+                  <Link href="/sermons">Listen to Sermons</Link>
+                </Button>
+              </motion.div>
+            </motion.div>
           </div>
         </section>
 
@@ -434,49 +586,29 @@ export default function HomePage() {
         <section className="py-16 px-4 sm:px-6 lg:px-8">
           <div className="container mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold mb-8 text-center">Featured Events</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {getFeaturedEvents().map((event, index) => (
-                <motion.div
-                  key={event.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                >
-                  <Card className="h-full">
-                    <div className="aspect-video relative">
-                      <Image
-                        src={event.imageUrl}
-                        alt={event.title}
-                        fill
-                        className="object-cover rounded-t-lg"
-                      />
-                      <div className="absolute top-4 right-4">
-                        <Badge>{event.type}</Badge>
-                      </div>
-                    </div>
-                    <CardContent className="p-6">
-                      <h3 className="text-xl font-semibold mb-2">{event.title}</h3>
-                      <p className="text-muted-foreground text-sm mb-4">
-                        {event.description}
-                      </p>
-                      <div className="space-y-2 text-sm text-muted-foreground">
-                        <p className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-2" />
-                          {event.date}
-                        </p>
-                        <p className="flex items-center">
-                          <Clock className="h-4 w-4 mr-2" />
-                          {event.time}
-                        </p>
-                        <p className="flex items-center">
-                          <MapPin className="h-4 w-4 mr-2" />
-                          {event.location}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
+            <FeaturedEvents />
+          </div>
+        </section>
+
+
+        {/* Our Pastors Section */}
+        <section className="py-16 bg-muted/30 px-4 sm:px-6 lg:px-8">
+          <div className="container mx-auto">
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4 border-primary/20 text-primary">Our Pastors</Badge>
+              <h2 className="text-3xl md:text-4xl font-bold">Meet Our Pastors</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">With visionary leadership and a heart to serve, our pastors guide and equip the church.</p>
+            </div>
+
+            <HomePastors />
+
+            <div className="text-center mt-10">
+              <Link href="/pastors">
+                <Button variant="outline" className="gap-2">
+                  Meet all pastors
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
             </div>
           </div>
         </section>

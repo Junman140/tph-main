@@ -1,111 +1,79 @@
-// import { cookies } from 'next/headers';
-// import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import * as z from 'zod';
 
-// export async function POST(request: Request) {
-//   try {
-//     const supabase = createRouteHandlerClient({ cookies });
+const createPostSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  content: z.string().min(1, "Content is required"),
+  slug: z.string().min(1, "Slug is required"),
+  excerpt: z.string().optional(),
+  tags: z.array(z.string()).default([]),
+  published: z.boolean().default(false),
+  authorName: z.string().optional(),
+  authorImage: z.string().optional(),
+  featuredImage: z.string().optional(),
+  metaDescription: z.string().optional(),
+  readingTime: z.number().optional(),
+});
+
+// GET /api/blog - Get all blog posts
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const published = searchParams.get('published');
     
-//     // Parse request body
-//     const { title, content, description, slug, tags, reading_time, isDraft } = await request.json();
+    const posts = await prisma.post.findMany({
+      where: published === 'true' ? { published: true } : undefined,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
 
-//     // Convert comma-separated tags string to array if it's a string
-//     const tagsArray = typeof tags === 'string' 
-//       ? tags.split(",").map((tag: string) => tag.trim()).filter(Boolean)
-//       : tags || [];
+    return NextResponse.json(posts);
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch posts' },
+      { status: 500 }
+    );
+  }
+}
 
-//     // Validate required fields
-//     if (!title || !content || !slug) {
-//       return NextResponse.json(
-//         { error: 'Missing required fields' },
-//         { status: 400 }
-//       );
-//     }
+// POST /api/blog - Create a new blog post
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const data = createPostSchema.parse(body);
 
-//     console.log('Creating blog post with data:', {
-//       title,
-//       slug,
-//       content,
-//       description,
-//       tags: tagsArray,
-//       reading_time
-//     });
+    // Check if slug already exists
+    const existingPost = await prisma.post.findUnique({
+      where: { slug: data.slug },
+    });
 
-//     // Insert the post - use anonymous author_id for now
-//     const { data, error } = await supabase
-//       .from('posts')
-//       .insert([
-//         {
-//           title,
-//           content,
-//           published: !isDraft,
-//           slug,
-//           excerpt: description, // Use description as excerpt for compatibility
-//           tags: tagsArray,
-//           author_id: '00000000-0000-0000-0000-000000000000', // Anonymous author ID
-//           created_at: new Date().toISOString()
-//         }
-//       ])
-//       .select()
-//       .single();
+    if (existingPost) {
+      return NextResponse.json(
+        { error: 'A post with this slug already exists' },
+        { status: 400 }
+      );
+    }
 
-//     if (error) {
-//       console.error('Error creating post:', error);
-//       return NextResponse.json(
-//         { error: 'Failed to create post' },
-//         { status: 500 }
-//       );
-//     }
+    const post = await prisma.post.create({
+      data,
+    });
 
-//     return NextResponse.json(data);
-//   } catch (error) {
-//     console.error('Error in POST /api/blog:', error);
-//     return NextResponse.json(
-//       { error: 'Internal server error' },
-//       { status: 500 }
-//     );
-//   }
-// }
+    return NextResponse.json(post, { status: 201 });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid input', details: error.errors },
+        { status: 400 }
+      );
+    }
 
-// export async function GET(request: Request) {
-//   try {
-//     const supabase = createRouteHandlerClient({ cookies });
-    
-//     // Get the current session
-//     const { data: { session } } = await supabase.getSession();
-    
-//     let query = supabase
-//       .from('posts')
-//       .select('*')
-//       .order('created_at', { ascending: false });
-
-//     // If user is not authenticated, only show published posts
-//     if (!session) {
-//       query = query.eq('published', true);
-//     } else {
-//       // If user is authenticated, show their unpublished posts too
-//       query = query.or(`published.eq.true,author_id.eq.${session.user.id}`);
-//     }
-
-//     const { data, error } = await query;
-
-//     if (error) {
-//       console.error('Error fetching posts:', error);
-//       return NextResponse.json(
-//         { error: 'Failed to fetch posts' },
-//         { status: 500 }
-//       );
-//     }
-
-//     return NextResponse.json(data);
-//   } catch (error) {
-//     console.error('Error in GET /api/blog:', error);
-//     return NextResponse.json(
-//       { error: 'Internal server error' },
-//       { status: 500 }
-//     );
-//   }
-// } 
-
-// function createRouteHandlerClient(arg0: { cookies: () => Promise<ReadonlyRequestCookies>; }) {
-//   throw new Error('Function not implemented.');
-// }
+    console.error('Error creating post:', error);
+    return NextResponse.json(
+      { error: 'Failed to create post' },
+      { status: 500 }
+    );
+  }
+}

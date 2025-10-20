@@ -48,7 +48,7 @@ export default function DisclaimerPage() {
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Fair Use Disclaimer</h2>
             <p>
-              This website may use copyrighted material which has not always been specifically authorized by the copyright owner. We are making such material available for criticism, comment, news reporting, teaching, scholarship, or research. We believe this constitutes a "fair use" of any such copyrighted material as provided for in section 107 of the United States Copyright Law.
+              This website may use copyrighted material which has not always been specifically authorized by the copyright owner. We are making such material available for criticism, comment, news reporting, teaching, scholarship, or research. We believe this constitutes a &quot;fair use&quot; of any such copyrighted material as provided for in section 107 of the United States Copyright Law.
             </p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">No Responsibility Disclaimer</h2>
@@ -56,9 +56,9 @@ export default function DisclaimerPage() {
               The information on the website is provided with the understanding that The Peculiar House Global is not herein engaged in rendering legal, accounting, tax, or other professional advice and services. As such, it should not be used as a substitute for consultation with professional accounting, tax, legal, or other competent advisers.
             </p>
             
-            <h2 className="text-2xl font-semibold mt-8 mb-4">"Use at Your Own Risk" Disclaimer</h2>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">&quot;Use at Your Own Risk&quot; Disclaimer</h2>
             <p>
-              All information in this website is provided "as is," with no guarantee of completeness, accuracy, timeliness, or of the results obtained from the use of this information, and without warranty of any kind, express or implied, including, but not limited to warranties of performance, merchantability, and fitness for a particular purpose.
+              All information in this website is provided &quot;as is,&quot; with no guarantee of completeness, accuracy, timeliness, or of the results obtained from the use of this information, and without warranty of any kind, express or implied, including, but not limited to warranties of performance, merchantability, and fitness for a particular purpose.
             </p>
             <p className="mt-4">
               The Peculiar House Global will not be liable to you or anyone else for any decision made or action taken in reliance on the information given by the website or for any consequential, special, or similar damages, even if advised of the possibility of such damages.

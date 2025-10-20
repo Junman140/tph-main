@@ -30,7 +30,7 @@ import { Loader2 } from "lucide-react"
 const formSchema = z.object({
   fullName: z.string().min(2, { message: "Full name is required" }),
   email: z.string().email({ message: "Valid email is required" }),
-  phoneNumber: z.string().min(10, { message: "Valid phone number is required" }).optional(),
+  phoneNumber: z.string().min(10, { message: "Valid phone number is required" }),
   location: z.string().min(2, { message: "Location is required" }),
   notes: z.string().optional(),
 })
@@ -73,9 +73,35 @@ export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps)
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     try {
-      // Here you would typically send the data to your backend
-      // For now, we'll just log it and show a success message
       console.log('Form submitted with values:', data);
+      
+      // Send the registration data to the API
+      const response = await fetch('/api/events/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          eventId,
+          ...data,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 409) {
+          toast({
+            title: "Already Registered",
+            description: "You are already registered for this event.",
+            variant: "default",
+          });
+          setOpen(false);
+          form.reset();
+          return;
+        }
+        throw new Error(result.error || 'Registration failed');
+      }
       
       // Show success message
       toast({
@@ -86,10 +112,12 @@ export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps)
       // Close the form and reset
       setOpen(false);
       form.reset();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error('Registration failed:', error);
+      const message = error instanceof Error ? error.message : 'Failed to register for the event';
       toast({
         title: "Error",
-        description: error.message || "Failed to register for the event",
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -115,7 +143,7 @@ export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps)
               name="fullName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
+                  <FormLabel>Full Name *</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -128,7 +156,7 @@ export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps)
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Email *</FormLabel>
                   <FormControl>
                     <Input type="email" {...field} />
                   </FormControl>
@@ -141,7 +169,7 @@ export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps)
               name="phoneNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
+                  <FormLabel>Phone Number *</FormLabel>
                   <FormControl>
                     <Input type="tel" {...field} />
                   </FormControl>
@@ -154,7 +182,7 @@ export function RegistrationForm({ eventId, eventTitle }: RegistrationFormProps)
               name="location"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Location</FormLabel>
+                  <FormLabel>Location *</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>

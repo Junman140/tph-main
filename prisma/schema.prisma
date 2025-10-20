@@ -1,0 +1,185 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Blog posts table (no user relationships)
+model Post {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  title     String
+  content   String
+  published Boolean  @default(false)
+  slug      String   @unique
+  excerpt   String?
+  tags      String[]
+  readingTime Int?   @map("reading_time")
+  authorName String? @map("author_name")
+  authorImage String? @map("author_image")
+  featuredImage String? @map("featured_image")
+  metaDescription String? @map("meta_description")
+
+  @@map("posts")
+}
+
+// Event registrations (anonymous)
+model EventRegistration {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now()) @map("created_at")
+  eventId     String   @map("event_id")
+  fullName    String   @map("full_name")
+  email       String
+  phoneNumber String   @map("phone_number")
+  location    String
+  notes       String?
+  status      String   @default("pending")
+  
+  // Relations
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("event_registrations")
+}
+
+// Prayer requests (anonymous)
+model Prayer {
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now()) @map("created_at")
+  title            String
+  content          String
+  category         String
+  isPrivate        Boolean  @default(false) @map("is_private")
+  status           String   @default("pending")
+  answeredAt       DateTime? @map("answered_at")
+  tags             String[]
+  prayerCount      Int      @default(0) @map("prayer_count")
+  supportingVerses String[] @map("supporting_verses")
+  verseReference   String?  @map("verse_reference")
+
+  @@map("prayers")
+}
+
+// Testimonies (anonymous)
+model Testimony {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  title     String
+  content   String
+  category  String
+  isApproved Boolean @default(false) @map("is_approved")
+  tags      String[]
+
+  @@map("testimonies")
+}
+
+// Newsletter subscriptions
+model Subscription {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  email     String   @unique
+  name      String?
+  isActive  Boolean  @default(true) @map("is_active")
+
+  @@map("subscriptions")
+}
+
+// Gallery images
+model GalleryImage {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  title       String
+  description String?
+  imageUrl    String   @map("image_url")
+  altText     String?  @map("alt_text")
+  category    String?
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  driveLink   String?  @map("drive_link") // Google Drive link for full album
+
+  @@map("gallery_images")
+}
+
+// Admin users for authentication
+model AdminUser {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("admin")
+  isActive  Boolean  @default(true) @map("is_active")
+
+  @@map("admin_users")
+}
+
+// Events for admin management
+model Event {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  title       String
+  description String?
+  date        DateTime
+  location    String?
+  imageUrl    String?  @map("image_url")
+  altText     String?  @map("alt_text")
+  isActive    Boolean  @default(true) @map("is_active")
+  maxRegistrations Int? @map("max_registrations")
+  registrationFormFields Json? @map("registration_form_fields") // Store custom form fields as JSON
+  driveLink   String?  @map("drive_link") // Google Drive link for event details
+  
+  // Relations
+  registrations EventRegistration[]
+
+  @@map("events")
+}
+
+// Church attendance records
+model AttendanceRecord {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  serviceDate DateTime @map("service_date")
+  serviceType String   @map("service_type") // e.g., "Sunday Service", "Wednesday Service", "Special Event"
+  memberName  String   @map("member_name")
+  memberId    String?  @map("member_id") // Optional member ID if you have a member database
+  phoneNumber String?  @map("phone_number")
+  email       String?
+  address     String?
+  age         Int?
+  gender      String?
+  isVisitor   Boolean  @default(false) @map("is_visitor")
+  isFirstTime Boolean  @default(false) @map("is_first_time")
+  notes       String?
+  recordedBy  String?  @map("recorded_by") // Admin who recorded the attendance
+
+  @@map("attendance_records")
+}
+
+// Pastors
+model Pastor {
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  name             String
+  title            String
+  bio              String
+  imageUrl         String   @map("image_url")
+  altText          String?  @map("alt_text")
+  order            Int      @default(0)
+  isSenior         Boolean  @default(false) @map("is_senior")
+  isActive         Boolean  @default(true) @map("is_active")
+  slug             String   @unique
+  socialInstagram  String?  @map("social_instagram")
+
+  @@map("pastors")
+}

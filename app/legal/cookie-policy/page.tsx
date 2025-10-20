@@ -55,12 +55,12 @@ export default function CookiePolicyPage() {
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Cookie Consent</h2>
             <p>
-              When you first visit our website, you will be shown a cookie banner requesting your consent to set cookies. By clicking "Accept All Cookies," you consent to the use of all cookies described in this policy. You can also choose to set your preferences by clicking "Cookie Settings."
+              When you first visit our website, you will be shown a cookie banner requesting your consent to set cookies. By clicking &quot;Accept All Cookies,&quot; you consent to the use of all cookies described in this policy. You can also choose to set your preferences by clicking &quot;Cookie Settings.&quot;
             </p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Changes to Our Cookie Policy</h2>
             <p>
-              We may update our Cookie Policy from time to time. We will notify you of any changes by posting the new Cookie Policy on this page and updating the "Last Updated" date.
+              We may update our Cookie Policy from time to time. We will notify you of any changes by posting the new Cookie Policy on this page and updating the &quot;Last Updated&quot; date.
             </p>
             <p className="mt-4">
               We encourage you to review this Cookie Policy periodically to stay informed about how we are using cookies.

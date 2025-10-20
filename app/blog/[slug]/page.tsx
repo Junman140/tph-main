@@ -1,37 +1,20 @@
-import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import { format } from 'date-fns'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+// import { Card } from '@/components/ui/card'
+import Image from 'next/image'
 import { MainNav } from '@/components/layout/main-nav'
-
-interface BlogPost {
-  id: string;
-  title: string;
-  content: string;
-  slug: string;
-  excerpt: string | null;
-  published: boolean;
-  created_at: string;
-  updated_at: string;
-  author_id: string;
-  tags: string[];
-}
+import { prisma } from '@/lib/prisma'
 
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
-  // Initialize Supabase client directly
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  // Fetch the post using Prisma
+  const post = await prisma.post.findUnique({
+    where: {
+      slug: params.slug,
+    },
+  });
 
-  // Fetch the post
-  const { data: post, error } = await supabase
-    .from('posts')
-    .select('*')
-    .eq('slug', params.slug)
-    .single();
-
-  if (error || !post) {
+  if (!post) {
     notFound();
   }
 
@@ -54,21 +37,19 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
               {post.title}
             </h1>
             <div className="flex items-center space-x-4 text-muted-foreground">
-              <time dateTime={post.created_at}>
-                {format(new Date(post.created_at), 'MMMM d, yyyy')}
+              <time dateTime={post.createdAt.toISOString()}>
+                {format(post.createdAt, 'MMMM d, yyyy')}
               </time>
-              <div className="text-sm">{post.reading_time} min read</div>
+              <div className="text-sm">{post.readingTime} min read</div>
             </div>
-            {post.author_name && (
+            {post.authorName && (
               <div className="flex items-center space-x-4">
-                {post.author_image && (
-                  <img
-                    src={post.author_image}
-                    alt={post.author_name}
-                    className="h-8 w-8 rounded-full"
-                  />
+                {post.authorImage && (
+                  <div className="relative h-8 w-8">
+                    <Image src={post.authorImage} alt={post.authorName} fill className="rounded-full object-cover" />
+                  </div>
                 )}
-                <div className="text-sm font-medium">{post.author_name}</div>
+                <div className="text-sm font-medium">{post.authorName}</div>
               </div>
             )}
           </div>

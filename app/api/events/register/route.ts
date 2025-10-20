@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { Database } from '@/lib/supabase/client';
+import { prisma } from '@/lib/prisma';
 
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient<Database>(supabaseUrl, supabaseServiceKey);
+// GET endpoint to fetch all event registrations (for admin dashboard)
+export async function GET() {
+  try {
+    const registrations = await prisma.eventRegistration.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    
+    return NextResponse.json(registrations);
+  } catch (error) {
+    console.error("Get event registrations error:", error);
+    return NextResponse.json({ error: "Failed to fetch event registrations" }, { status: 500 });
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,7 +25,6 @@ export async function POST(req: NextRequest) {
     
     const { 
       eventId, 
-      userId, 
       fullName, 
       email, 
       phoneNumber, 
@@ -34,42 +41,13 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    // Try to create the table if it doesn't exist
-    try {
-      await supabase.rpc('exec_sql', {
-        sql: `
-          CREATE TABLE IF NOT EXISTS event_registrations (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            event_id TEXT NOT NULL,
-            user_id TEXT,
-            full_name TEXT NOT NULL,
-            email TEXT NOT NULL,
-            phone_number TEXT NOT NULL,
-            location TEXT NOT NULL,
-            notes TEXT,
-            status TEXT DEFAULT 'registered',
-            CONSTRAINT unique_event_email UNIQUE(event_id, email)
-          );
-        `
-      });
-      console.log('Table check/creation completed');
-    } catch (tableError) {
-      console.log('Note: Table creation attempted but may require admin rights', tableError);
-      // Continue anyway as the table might already exist
-    }
-
     // Check if email is already registered for this event
-    const { data: existingRegistration, error: checkError } = await supabase
-      .from('event_registrations')
-      .select('*')
-      .eq('event_id', eventId)
-      .eq('email', email)
-      .maybeSingle();
-      
-    if (checkError) {
-      console.error('Error checking existing registration:', checkError);
-    }
+    const existingRegistration = await prisma.eventRegistration.findFirst({
+      where: {
+        eventId,
+        email,
+      },
+    });
 
     if (existingRegistration) {
       return NextResponse.json(
@@ -80,46 +58,20 @@ export async function POST(req: NextRequest) {
 
     console.log('Attempting to insert registration into database');
     
-    try {
-      // Insert the registration into the database
-      const { data, error } = await supabase
-        .from('event_registrations')
-        .insert({
-          event_id: eventId,
-          user_id: userId || null,
-          full_name: fullName,
-          email: email,
-          phone_number: phoneNumber,
-          location: location,
-          notes: notes || null,
-          status: 'registered'
-        });
-
-      if (error) {
-        // Check for duplicate registration error (unique constraint violation)
-        if (error.code === '23505') {
-          console.log('Duplicate registration attempt:', { email, eventId });
-          return NextResponse.json(
-            { error: 'You have already registered for this event' },
-            { status: 409 }
-          );
-        }
-        
-        console.error('Supabase error registering for event:', error);
-        return NextResponse.json(
-          { error: `Database error: ${error.message || 'Failed to register for event'}` },
-          { status: 500 }
-        );
-      }
-      
-      console.log('Registration successful');
-    } catch (dbError: any) {
-      console.error('Exception during database operation:', dbError);
-      return NextResponse.json(
-        { error: `Database exception: ${dbError.message || 'Unknown database error'}` },
-        { status: 500 }
-      );
-    }
+    // Insert the registration using Prisma
+    const registration = await prisma.eventRegistration.create({
+      data: {
+        eventId,
+        fullName,
+        email,
+        phoneNumber,
+        location,
+        notes: notes || undefined,
+        status: 'pending'
+      },
+    });
+    
+    console.log('Registration successful:', registration.id);
 
     // Return success response
     return NextResponse.json({
@@ -128,8 +80,57 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('Error processing registration:', error);
+    
+    // Handle unique constraint violations
+    if (error instanceof Error && error.message.includes('Unique constraint')) {
+      return NextResponse.json(
+        { error: 'You have already registered for this event' },
+        { status: 409 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT endpoint to update registration status
+export async function PUT(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { id, status } = body;
+
+    if (!id || !status) {
+      return NextResponse.json(
+        { error: 'Registration ID and status are required' },
+        { status: 400 }
+      );
+    }
+
+    const validStatuses = ['pending', 'confirmed', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+      return NextResponse.json(
+        { error: 'Invalid status. Must be pending, confirmed, or cancelled' },
+        { status: 400 }
+      );
+    }
+
+    const updatedRegistration = await prisma.eventRegistration.update({
+      where: { id },
+      data: { status },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Registration status updated successfully',
+      registration: updatedRegistration
+    });
+  } catch (error) {
+    console.error('Error updating registration status:', error);
+    return NextResponse.json(
+      { error: 'Failed to update registration status' },
       { status: 500 }
     );
   }
