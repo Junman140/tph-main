@@ -11,6 +11,7 @@ import { Plus, FileText, Image, Users, Mail, Calendar, ClipboardList } from "luc
 
 export default function AdminDashboard() {
   const [admin, setAdmin] = useState<{ name?: string } | null>(null)
+  const [mounted, setMounted] = useState(false)
   const [stats, setStats] = useState({
     posts: 0,
     galleryImages: 0,
@@ -22,17 +23,21 @@ export default function AdminDashboard() {
   const router = useRouter()
 
   useEffect(() => {
-    // Check if admin is logged in
-    const adminData = localStorage.getItem('admin')
-    const adminToken = localStorage.getItem('adminToken')
+    setMounted(true)
+    
+    // Only run client-side logic after component is mounted
+    if (typeof window !== 'undefined') {
+      const adminData = localStorage.getItem('admin')
+      const adminToken = localStorage.getItem('adminToken')
 
-    if (!adminData || !adminToken) {
-      router.push('/admin/login')
-      return
+      if (!adminData || !adminToken) {
+        router.push('/admin/login')
+        return
+      }
+
+      setAdmin(JSON.parse(adminData))
+      fetchStats()
     }
-
-    setAdmin(JSON.parse(adminData))
-    fetchStats()
   }, [router])
 
   const fetchStats = async () => {
@@ -78,13 +83,34 @@ export default function AdminDashboard() {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('admin')
-    localStorage.removeItem('adminToken')
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('admin')
+      localStorage.removeItem('adminToken')
+    }
     router.push('/admin/login')
   }
 
+  // Don't render anything until mounted to avoid hydration issues
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (!admin) {
-    return <div>Loading...</div>
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
