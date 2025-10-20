@@ -1,15 +1,25 @@
-export default function GlobalError() {
+"use client"
+
+export default function GlobalError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string }
+  reset: () => void
+}) {
   return (
-    <html>
-      <body>
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-          <div style={{ textAlign: 'center' }}>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>Something went wrong</h1>
-            <p style={{ color: '#6b7280' }}>An unexpected error occurred. Please try again.</p>
-          </div>
-        </div>
-      </body>
-    </html>
+    <div className="min-h-screen flex items-center justify-center p-8">
+      <div className="text-center space-y-3">
+        <h1 className="text-2xl font-bold">Something went wrong</h1>
+        <p className="text-muted-foreground">An unexpected error occurred. Please try again.</p>
+        <button
+          onClick={reset}
+          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-white"
+        >
+          Try again
+        </button>
+      </div>
+    </div>
   )
 }
 
