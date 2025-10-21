@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -31,6 +31,11 @@ export default function BlogAdminPage() {
   const [uploadingImage, setUploadingImage] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Auto-generate slug from title when title changes (if not using custom slug)
   const generateSlug = (title: string) => {
@@ -135,6 +140,38 @@ export default function BlogAdminPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (!mounted) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'system-ui, sans-serif'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '2rem',
+            height: '2rem',
+            border: '2px solid #e5e7eb',
+            borderTop: '2px solid #000',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 1rem'
+          }}></div>
+          <p style={{ color: '#6b7280' }}>Loading...</p>
+          <style dangerouslySetInnerHTML={{
+            __html: `
+              @keyframes spin {
+                to { transform: rotate(360deg); }
+              }
+            `
+          }} />
+        </div>
+      </div>
+    )
   }
 
   return (

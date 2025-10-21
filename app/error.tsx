@@ -1,17 +1,8 @@
 "use client"
 
-export const dynamic = "force-dynamic"
+import Link from "next/link"
 
-export default function GlobalError({
-  error: _error,
-  reset,
-}: {
-  error: Error & { digest?: string }
-  reset: () => void
-}) {
-  // Mark error as used to avoid linting warnings
-  void _error
-
+export default function Error() {
   return (
     <html>
       <body>
@@ -21,33 +12,45 @@ export default function GlobalError({
           alignItems: 'center',
           justifyContent: 'center',
           padding: '2rem',
-          fontFamily: 'system-ui, sans-serif'
+          fontFamily: 'system-ui, sans-serif',
+          backgroundColor: '#ffffff'
         }}>
           <div style={{ textAlign: 'center' }}>
-            <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+            <h1 style={{
+              fontSize: '2rem',
+              fontWeight: 'bold',
+              marginBottom: '1rem',
+              color: '#000000'
+            }}>
               Something went wrong
             </h1>
-            <p style={{ color: '#666', marginBottom: '2rem' }}>
+            <p style={{
+              color: '#666666',
+              marginBottom: '2rem',
+              fontSize: '1rem'
+            }}>
               An unexpected error occurred. Please try again.
             </p>
-            <button
-              onClick={reset}
+            <Link
+              href="/"
               style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#000',
-                color: '#fff',
+                padding: '0.75rem 1.5rem',
+                backgroundColor: '#000000',
+                color: '#ffffff',
                 border: 'none',
                 borderRadius: '0.375rem',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                fontSize: '1rem',
+                fontWeight: '500',
+                textDecoration: 'none',
+                display: 'inline-block'
               }}
             >
-              Try again
-            </button>
+              Go back home
+            </Link>
           </div>
         </div>
       </body>
     </html>
   )
 }
-
-

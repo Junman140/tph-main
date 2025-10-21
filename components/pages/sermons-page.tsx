@@ -1,8 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { MainNav } from "@/components/layout/main-nav"
-import { useQuery } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatDistance } from "date-fns"
@@ -104,13 +103,25 @@ function SermonSkeleton() {
 
 export default function SermonsPage() {
   const [currentPage, setCurrentPage] = useState(1)
+  const [allSermons, setAllSermons] = useState<Sermon[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const itemsPerPage = 9 // Show 9 sermons per page (3x3 grid)
 
-  // Fetch all sermons
-  const { data: allSermons, isLoading, error } = useQuery({
-    queryKey: ['sermons'],
-    queryFn: fetchSermons
-  })
+  useEffect(() => {
+    const fetchSermonsData = async () => {
+      try {
+        const data = await fetchSermons()
+        setAllSermons(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch sermons')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchSermonsData()
+  }, [])
 
   // Calculate pagination
   const totalSermons = allSermons?.length || 0

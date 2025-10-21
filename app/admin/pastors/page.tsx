@@ -37,6 +37,7 @@ export default function PastorsAdminPage() {
   const [success, setSuccess] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Pastor | null>(null)
+  const [mounted, setMounted] = useState(false)
 
   const [form, setForm] = useState({
     name: '',
@@ -54,13 +55,22 @@ export default function PastorsAdminPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const adminData = localStorage.getItem('admin')
-    const adminToken = localStorage.getItem('adminToken')
-    if (!adminData || !adminToken) {
-      router.push('/admin/login')
-      return
-    }
-    fetchPastors()
+    setMounted(true)
+    
+    // Use setTimeout to ensure this runs after hydration
+    const timer = setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        const adminData = localStorage.getItem('admin')
+        const adminToken = localStorage.getItem('adminToken')
+        if (!adminData || !adminToken) {
+          router.push('/admin/login')
+          return
+        }
+        fetchPastors()
+      }
+    }, 0)
+
+    return () => clearTimeout(timer)
   }, [router])
 
   const fetchPastors = async () => {
@@ -167,6 +177,38 @@ export default function PastorsAdminPage() {
     } catch (e) {
       setError((e as Error).message)
     }
+  }
+
+  if (!mounted) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'system-ui, sans-serif'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '2rem',
+            height: '2rem',
+            border: '2px solid #e5e7eb',
+            borderTop: '2px solid #000',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 1rem'
+          }}></div>
+          <p style={{ color: '#6b7280' }}>Loading...</p>
+          <style dangerouslySetInnerHTML={{
+            __html: `
+              @keyframes spin {
+                to { transform: rotate(360deg); }
+              }
+            `
+          }} />
+        </div>
+      </div>
+    )
   }
 
   return (

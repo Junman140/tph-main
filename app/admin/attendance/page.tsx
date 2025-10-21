@@ -69,6 +69,7 @@ export default function AttendanceManagementPage() {
   const [serviceTypeFilter, setServiceTypeFilter] = useState('')
   const [dateFilter, setDateFilter] = useState('')
   const [visitorFilter, setVisitorFilter] = useState('')
+  const [mounted, setMounted] = useState(false)
   const [formData, setFormData] = useState({
     serviceDate: '',
     serviceType: '',
@@ -106,16 +107,25 @@ export default function AttendanceManagementPage() {
   }, [searchTerm, serviceTypeFilter, dateFilter, visitorFilter])
 
   useEffect(() => {
-    // Check if admin is logged in
-    const adminData = localStorage.getItem('admin')
-    const adminToken = localStorage.getItem('adminToken')
+    setMounted(true)
+    
+    // Use setTimeout to ensure this runs after hydration
+    const timer = setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        // Check if admin is logged in
+        const adminData = localStorage.getItem('admin')
+        const adminToken = localStorage.getItem('adminToken')
 
-    if (!adminData || !adminToken) {
-      router.push('/admin/login')
-      return
-    }
+        if (!adminData || !adminToken) {
+          router.push('/admin/login')
+          return
+        }
 
-    fetchRecords()
+        fetchRecords()
+      }
+    }, 0)
+
+    return () => clearTimeout(timer)
   }, [router, fetchRecords])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -265,6 +275,38 @@ export default function AttendanceManagementPage() {
     
     return matchesSearch && matchesServiceType && matchesDate && matchesVisitor
   })
+
+  if (!mounted) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'system-ui, sans-serif'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '2rem',
+            height: '2rem',
+            border: '2px solid #e5e7eb',
+            borderTop: '2px solid #000',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 1rem'
+          }}></div>
+          <p style={{ color: '#6b7280' }}>Loading...</p>
+          <style dangerouslySetInnerHTML={{
+            __html: `
+              @keyframes spin {
+                to { transform: rotate(360deg); }
+              }
+            `
+          }} />
+        </div>
+      </div>
+    )
+  }
 
   if (loading) {
     return (

@@ -35,6 +35,7 @@ export default function GalleryManagementPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingImage, setEditingImage] = useState<GalleryImage | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -46,6 +47,28 @@ export default function GalleryManagementPage() {
     driveLink: ''
   })
   const router = useRouter()
+
+  useEffect(() => {
+    setMounted(true)
+    
+    // Use setTimeout to ensure this runs after hydration
+    const timer = setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        // Check if admin is logged in
+        const adminData = localStorage.getItem('admin')
+        const adminToken = localStorage.getItem('adminToken')
+
+        if (!adminData || !adminToken) {
+          router.push('/admin/login')
+          return
+        }
+
+        fetchImages()
+      }
+    }, 0)
+
+    return () => clearTimeout(timer)
+  }, [router])
 
   const handleImageUpload = async (file: File) => {
     setUploading(true)
@@ -69,19 +92,6 @@ export default function GalleryManagementPage() {
       setUploading(false)
     }
   }
-
-  useEffect(() => {
-    // Check if admin is logged in
-    const adminData = localStorage.getItem('admin')
-    const adminToken = localStorage.getItem('adminToken')
-
-    if (!adminData || !adminToken) {
-      router.push('/admin/login')
-      return
-    }
-
-    fetchImages()
-  }, [router])
 
   const fetchImages = async () => {
     try {
@@ -188,8 +198,68 @@ export default function GalleryManagementPage() {
     setShowForm(false)
   }
 
+  if (!mounted) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'system-ui, sans-serif'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '2rem',
+            height: '2rem',
+            border: '2px solid #e5e7eb',
+            borderTop: '2px solid #000',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 1rem'
+          }}></div>
+          <p style={{ color: '#6b7280' }}>Loading...</p>
+          <style dangerouslySetInnerHTML={{
+            __html: `
+              @keyframes spin {
+                to { transform: rotate(360deg); }
+              }
+            `
+          }} />
+        </div>
+      </div>
+    )
+  }
+
   if (loading) {
-    return <div>Loading...</div>
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'system-ui, sans-serif'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '2rem',
+            height: '2rem',
+            border: '2px solid #e5e7eb',
+            borderTop: '2px solid #000',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 1rem'
+          }}></div>
+          <p style={{ color: '#6b7280' }}>Loading gallery...</p>
+          <style dangerouslySetInnerHTML={{
+            __html: `
+              @keyframes spin {
+                to { transform: rotate(360deg); }
+              }
+            `
+          }} />
+        </div>
+      </div>
+    )
   }
 
   return (

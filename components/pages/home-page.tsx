@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge"
 import { MainNav } from "@/components/layout/main-nav"
 import { format, formatDistance } from "date-fns"
 import Image from "next/image"
-import { useQuery } from "@tanstack/react-query"
 import { Skeleton } from "@/components/ui/skeleton"
 
 // Animation variants
@@ -150,14 +149,36 @@ function SermonSkeleton() {
 
 // Home Pastors subsection
 function HomePastors() {
-  const { data: pastors, isLoading, error } = useQuery({
-    queryKey: ['pastors-home'],
-    queryFn: async () => {
-      const res = await fetch('/api/pastors?active=true')
-      if (!res.ok) throw new Error('Failed to fetch pastors')
-      return res.json()
+  interface PastorItem {
+    id: string
+    imageUrl: string
+    altText?: string | null
+    name: string
+    isSenior?: boolean
+    title?: string
+    bio?: string
+  }
+
+  const [pastors, setPastors] = useState<PastorItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchPastors = async () => {
+      try {
+        const res = await fetch('/api/pastors?active=true')
+        if (!res.ok) throw new Error('Failed to fetch pastors')
+        const data = await res.json()
+        setPastors(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch pastors')
+      } finally {
+        setIsLoading(false)
+      }
     }
-  })
+
+    fetchPastors()
+  }, [])
 
   if (isLoading) return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -179,17 +200,7 @@ function HomePastors() {
 
   if (error || !pastors) return null
 
-  interface PastorItem {
-    id: string
-    imageUrl: string
-    altText?: string | null
-    name: string
-    isSenior?: boolean
-    title?: string
-    bio?: string
-  }
-
-  const items = (pastors as PastorItem[]).slice(0, 4)
+  const items = pastors.slice(0, 4)
 
   return (
     <div className="space-y-12">
@@ -224,14 +235,26 @@ function FeaturedEvents() {
     registrationFormFields?: { type?: string; time?: string } | null
   }
 
-  const { data: events, isLoading, error } = useQuery<EventItem[]>({
-    queryKey: ['events'],
-    queryFn: async () => {
-      const response = await fetch('/api/events')
-      if (!response.ok) throw new Error('Failed to fetch events')
-      return response.json() as Promise<EventItem[]>
-    },
-  })
+  const [events, setEvents] = useState<EventItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await fetch('/api/events')
+        if (!response.ok) throw new Error('Failed to fetch events')
+        const data = await response.json()
+        setEvents(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch events')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchEvents()
+  }, [])
 
   if (isLoading) {
     return (
@@ -331,11 +354,24 @@ function FeaturedEvents() {
 
 // Component to fetch and display sermons on the homepage
 function HomepageSermons() {
-  // Fetch sermons data using React Query
-  const { data: sermons, isLoading, error } = useQuery<Sermon[]>({
-    queryKey: ['sermons'],
-    queryFn: fetchSermons,
-  })
+  const [sermons, setSermons] = useState<Sermon[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchSermonsData = async () => {
+      try {
+        const data = await fetchSermons()
+        setSermons(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch sermons')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchSermonsData()
+  }, [])
 
   // Display loading state
   if (isLoading) {

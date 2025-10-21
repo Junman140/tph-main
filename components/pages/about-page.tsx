@@ -1,6 +1,3 @@
-"use client"
-
-import { MainNav } from "@/components/layout/main-nav"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card, CardContent } from "@/components/ui/card"
 import { Shield, Heart, Crown, Globe } from "lucide-react"
@@ -8,8 +5,7 @@ import { Shield, Heart, Crown, Globe } from "lucide-react"
 export default function AboutPage() {
   return (
     <div className="min-h-screen flex flex-col">
-      <MainNav />
-
+      {/* Navigation will be handled by the layout */}
       <main className="flex-grow container mx-auto px-4 py-8 mt-16">
         {/* Vision & Mission */}
         <section className="mb-16">

@@ -1,7 +1,7 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { MainNav } from "@/components/layout/main-nav"
-import { useQuery } from "@tanstack/react-query"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
@@ -97,15 +97,26 @@ function EventSkeleton() {
 }
 
 export default function EventsPage() {
-  // Fetch events from database
-  const { data: events, isLoading, error } = useQuery({
-    queryKey: ['events'],
-    queryFn: async () => {
-      const response = await fetch('/api/events')
-      if (!response.ok) throw new Error('Failed to fetch events')
-      return response.json()
-    },
-  })
+  const [events, setEvents] = useState<Event[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await fetch('/api/events')
+        if (!response.ok) throw new Error('Failed to fetch events')
+        const data = await response.json()
+        setEvents(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch events')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchEvents()
+  }, [])
 
   if (isLoading) {
     return (

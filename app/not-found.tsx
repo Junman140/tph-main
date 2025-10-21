@@ -1,15 +1,41 @@
-"use client"
-
 import Link from "next/link"
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-8">
-      <div className="text-center space-y-3">
-        <h1 className="text-2xl font-bold">Page not found</h1>
-        <p className="text-muted-foreground">The page you are looking for does not exist.</p>
-        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-        <Link href="/" className="text-primary underline">Go back home</Link>
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '2rem',
+      fontFamily: 'system-ui, sans-serif'
+    }}>
+      <div style={{ textAlign: 'center' }}>
+        <h1 style={{
+          fontSize: '2rem',
+          fontWeight: 'bold',
+          marginBottom: '1rem',
+          color: '#000000'
+        }}>
+          Page not found
+        </h1>
+        <p style={{
+          color: '#666666',
+          marginBottom: '2rem',
+          fontSize: '1rem'
+        }}>
+          The page you are looking for does not exist.
+        </p>
+        <Link 
+          href="/" 
+          style={{
+            color: '#000000',
+            textDecoration: 'underline',
+            fontSize: '1rem'
+          }}
+        >
+          Go back home
+        </Link>
       </div>
     </div>
   )
