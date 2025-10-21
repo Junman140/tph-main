@@ -1,5 +1,3 @@
-"use client"
-
 import { MainNav } from "@/components/layout/main-nav"
 
 export default function CookiePolicyPage() {

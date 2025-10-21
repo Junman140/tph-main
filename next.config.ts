@@ -1,5 +1,5 @@
 import { NextConfig } from 'next';
-import createMDX from '@next/mdx';
+// import createMDX from '@next/mdx';
 
 const nextConfig: NextConfig = {
   images: {
@@ -44,8 +44,17 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {}
-  }
+  },
+  // Disable static optimization for pages with client components
+  trailingSlash: false,
+  skipTrailingSlashRedirect: true
 };
 
-const withMDX = createMDX({});
-export default withMDX(nextConfig);
+// const withMDX = createMDX({
+//   options: {
+//     remarkPlugins: [],
+//     rehypePlugins: [],
+//   },
+// });
+
+export default nextConfig;
