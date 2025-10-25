@@ -1,5 +1,10 @@
-// This middleware is now empty as we've removed the authentication system
-// All routes are now public for the church website
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+
+export function middleware(request: NextRequest) {
+   
+  return NextResponse.next()
+}
 
 export const config = {
   matcher: [],

@@ -2,6 +2,8 @@
 
 import { MainNav } from "@/components/layout/main-nav"
 
+export const dynamic = 'force-dynamic'
+
 export default function DisclaimerPage() {
   return (
     <div className="min-h-screen flex flex-col">

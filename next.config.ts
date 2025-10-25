@@ -36,25 +36,19 @@ const nextConfig: NextConfig = {
       }
     ],
   },
-  pageExtensions: ["ts", "tsx", "mdx"],
-
-  // Add TypeScript error handling
+  pageExtensions: ["ts", "tsx"],
+ 
   typescript: {
     ignoreBuildErrors: true,
   },
   experimental: {
     serverActions: {}
   },
-  // Disable static optimization for pages with client components
+  // Disable static optimization to prevent prerendering issues
   trailingSlash: false,
   skipTrailingSlashRedirect: true
 };
 
-// const withMDX = createMDX({
-//   options: {
-//     remarkPlugins: [],
-//     rehypePlugins: [],
-//   },
-// });
+ 
 
 export default nextConfig;

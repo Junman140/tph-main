@@ -1,3 +1,5 @@
+"use client"
+
 import AboutPage from "@/components/pages/about-page"
 import { MainNav } from "@/components/layout/main-nav"
 
