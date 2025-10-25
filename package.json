@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "pnpm dlx next dev",
+    "dev": "pnpm next dev",
     "build": "pnpm next build",
-    "start": "pnpm dlx next start",
+    "start": "pnpm next start",
     "lint": "pnpm dlx next lint",
     "postinstall": "prisma generate --no-engine",
     "db:generate": "prisma generate",
