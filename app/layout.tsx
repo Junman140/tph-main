@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { GeistSans, GeistMono } from "geist/font";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = GeistSans;
 const geistMono = GeistMono;
@@ -18,7 +19,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`} suppressHydrationWarning={true}>
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

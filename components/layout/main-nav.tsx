@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Menu, X } from "lucide-react"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export function MainNav() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -148,6 +149,7 @@ export function MainNav() {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ display: 'none', alignItems: 'center', gap: '1rem' }} className="md:flex">
+              <ThemeToggle />
               <Button asChild variant="ghost" size="sm">
                 <Link href="/donate">Donate</Link>
               </Button>
@@ -261,6 +263,9 @@ export function MainNav() {
                   </div>
                   <div style={{ borderTop: '1px solid #e5e7eb', padding: '1.5rem 1rem' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
+                        <ThemeToggle />
+                      </div>
                       <Button asChild variant="outline" style={{ width: '100%' }}>
                         <Link href="/donate" onClick={() => setIsOpen(false)}>
                           Donate
