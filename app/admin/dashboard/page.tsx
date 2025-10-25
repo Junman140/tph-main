@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { MainNav } from "@/components/layout/main-nav"
+import { AdminNav } from "@/components/layout/admin-nav"
 import { Plus, FileText, Image, Users, Mail, Calendar, ClipboardList } from "lucide-react"
 
 export default function AdminDashboard() {
@@ -115,7 +115,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <MainNav />
+      <AdminNav />
       <div className="flex-grow pt-24 pb-16">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="flex justify-between items-center mb-8">

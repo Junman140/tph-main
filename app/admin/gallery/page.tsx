@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { MainNav } from "@/components/layout/main-nav"
+import { AdminNav } from "@/components/layout/admin-nav"
 import { Plus, Edit, Trash2, ExternalLink } from "lucide-react"
 import Image from "next/image"
 
@@ -264,7 +264,7 @@ export default function GalleryManagementPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <MainNav />
+      <AdminNav />
       <div className="flex-grow pt-24 pb-16">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="flex justify-between items-center mb-8">

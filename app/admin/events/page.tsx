@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { MainNav } from "@/components/layout/main-nav"
+import { AdminNav } from "@/components/layout/admin-nav"
 import { Plus, Edit, Trash2, Calendar, MapPin, Users, Eye, Download, Mail, Phone, Clock } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
@@ -310,7 +310,7 @@ export default function EventsManagementPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <MainNav />
+      <AdminNav />
       <div className="flex-grow pt-24 pb-16">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="flex justify-between items-center mb-8">

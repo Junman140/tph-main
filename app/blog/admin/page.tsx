@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 // import { format } from "date-fns"
-import { MainNav } from "@/components/layout/main-nav"
+import { AdminNav } from "@/components/layout/admin-nav"
 import { Upload, Save, Eye } from "lucide-react"
 import Image from "next/image"
 
@@ -176,7 +176,7 @@ export default function BlogAdminPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <MainNav />
+      <AdminNav />
       <div className="flex-grow pt-24 pb-16">
         <div className="container mx-auto px-4 max-w-4xl">
           <Card>

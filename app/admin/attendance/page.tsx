@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { MainNav } from "@/components/layout/main-nav"
+import { AdminNav } from "@/components/layout/admin-nav"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
@@ -321,7 +321,7 @@ export default function AttendanceManagementPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <MainNav />
+      <AdminNav />
       <div className="flex-grow pt-24 pb-16">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="flex justify-between items-center mb-8">
