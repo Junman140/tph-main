@@ -49,13 +49,13 @@ export default function DPBannerCustomizer() {
       await new Promise((resolve, reject) => {
         templateImg.onload = resolve
         templateImg.onerror = reject
-        templateImg.src = "/banner.jpg"
+        templateImg.src = "/fresh-fire-template.jpg"
       })
 
       // Draw the template
       ctx.drawImage(templateImg, 0, 0, canvas.width, canvas.height)
 
-      // Load and draw user image in the center area
+      // Load and draw user image in the white square area (upper right quadrant)
       const userImg = new Image()
       userImg.crossOrigin = "anonymous"
 
@@ -65,32 +65,16 @@ export default function DPBannerCustomizer() {
         userImg.src = userImage
       })
 
-      const imageX = 240
-      const imageY = 250
-      const imageWidth = 600
-      const imageHeight = 750
+      // White square position in upper right quadrant
+      const imageX = 620
+      const imageY = 80
+      const imageWidth = 400
+      const imageHeight = 550
 
-      // Create a rounded rectangle clipping path for the photo area only
+      // Create a rectangular clipping path for the white square area
       ctx.save()
       ctx.beginPath()
-
-      // Manual rounded rectangle path for better browser compatibility
-      const radius = 20
-      ctx.moveTo(imageX + radius, imageY)
-      ctx.lineTo(imageX + imageWidth - radius, imageY)
-      ctx.quadraticCurveTo(imageX + imageWidth, imageY, imageX + imageWidth, imageY + radius)
-      ctx.lineTo(imageX + imageWidth, imageY + imageHeight - radius)
-      ctx.quadraticCurveTo(
-        imageX + imageWidth,
-        imageY + imageHeight,
-        imageX + imageWidth - radius,
-        imageY + imageHeight,
-      )
-      ctx.lineTo(imageX + radius, imageY + imageHeight)
-      ctx.quadraticCurveTo(imageX, imageY + imageHeight, imageX, imageY + imageHeight - radius)
-      ctx.lineTo(imageX, imageY + radius)
-      ctx.quadraticCurveTo(imageX, imageY, imageX + radius, imageY)
-      ctx.closePath()
+      ctx.rect(imageX, imageY, imageWidth, imageHeight)
       ctx.clip()
 
       // Calculate aspect ratio and draw image to fit within the photo frame
@@ -116,13 +100,16 @@ export default function DPBannerCustomizer() {
       ctx.drawImage(userImg, drawX, drawY, drawWidth, drawHeight)
       ctx.restore()
 
-      ctx.fillStyle = "#ffffff"
-      ctx.font = "bold 44px Arial, sans-serif"
-      ctx.textAlign = "center"
-      ctx.textBaseline = "middle"
+      // Draw name in the ministering section (bottom right)
+      ctx.fillStyle = "#3d2817" // Dark brown color to match template
+      ctx.font = "bold 32px Arial, sans-serif"
+      ctx.textAlign = "left"
+      ctx.textBaseline = "top"
 
-      const textY = 1120
-      ctx.fillText(userName.toUpperCase(), canvas.width / 2, textY)
+      // Position in the ministering section at bottom right
+      const textX = 650
+      const textY = 1280
+      ctx.fillText(userName.toUpperCase(), textX, textY)
     } catch (error) {
       console.error("Error generating banner:", error)
     } finally {
@@ -157,9 +144,9 @@ export default function DPBannerCustomizer() {
         <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
           {/* Header */}
           <div className="mt-16 md:mt-24 text-center space-y-4">
-            <h1 className="text-2xl md:text-4xl font-bold text-foreground">Create Your Personalized DP Banner</h1>
+            <h1 className="text-2xl md:text-4xl font-bold text-foreground">Create Your Personalized FRESH FIRE Banner</h1>
             <p className="text-base md:text-lg text-muted-foreground">
-              Upload your photo, add your name, and download your custom Young Africa Works banner
+              Upload your photo, add your name, and download your custom FRESH FIRE event banner
             </p>
           </div>
 
