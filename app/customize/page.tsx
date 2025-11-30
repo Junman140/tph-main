@@ -65,13 +65,40 @@ export default function DPBannerCustomizer() {
         userImg.src = userImage
       })
 
-      // White square position in upper right quadrant
-      const imageX = 620
-      const imageY = 80
-      const imageWidth = 400
-      const imageHeight = 550
+      // White square (card container) position - exactly matching the white square in template
+      // Template white square: top-left at X=590, Y=130, Width=440, Height=560
+      const cardX = 590
+      const cardY = 300
+      const cardWidth = 440
+      const cardHeight = 590
 
-      // Create a rectangular clipping path for the white square area
+      // Card padding - creates border effect around the image
+      const cardPadding = 12
+      
+      // Image area inside the card (with padding)
+      const imageX = cardX + cardPadding
+      const imageY = cardY + cardPadding
+      const imageWidth = cardWidth - (cardPadding * 2)
+      const imageHeight = cardHeight - (cardPadding * 2)
+
+      // Draw subtle shadow for the card (gives depth)
+      ctx.save()
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.15)'
+      ctx.shadowBlur = 15
+      ctx.shadowOffsetX = 4
+      ctx.shadowOffsetY = 4
+      
+      // Draw card background (white)
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(cardX, cardY, cardWidth, cardHeight)
+      ctx.restore()
+
+      // Draw a subtle border around the card
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.08)'
+      ctx.lineWidth = 1
+      ctx.strokeRect(cardX, cardY, cardWidth, cardHeight)
+
+      // Clip to the image area inside the card
       ctx.save()
       ctx.beginPath()
       ctx.rect(imageX, imageY, imageWidth, imageHeight)
@@ -100,15 +127,15 @@ export default function DPBannerCustomizer() {
       ctx.drawImage(userImg, drawX, drawY, drawWidth, drawHeight)
       ctx.restore()
 
-      // Draw name in the ministering section (bottom right)
+      // Draw name in the white brush stroke area below CONFIRMED
+      // Brush stroke visual center: X=320, Y=730 (extends X=90-550, Y=690-770)
       ctx.fillStyle = "#3d2817" // Dark brown color to match template
-      ctx.font = "bold 32px Arial, sans-serif"
-      ctx.textAlign = "left"
-      ctx.textBaseline = "top"
-
-      // Position in the ministering section at bottom right
-      const textX = 650
-      const textY = 1280
+      ctx.font = "bold 48px Arial, sans-serif"
+      ctx.textAlign = "center"
+      ctx.textBaseline = "middle"
+      
+      const textX = 320
+      const textY = 750
       ctx.fillText(userName.toUpperCase(), textX, textY)
     } catch (error) {
       console.error("Error generating banner:", error)
